@@ -139,7 +139,86 @@ namespace CardsAgainstHumanity.Server
 
         protected void ProcessGameSiteRequest(HttpListenerContext context, int id)
         {
+            Console.WriteLine($"Delivering game-page of game #{id} to {context.Request.UserHostAddress}...");
 
+            Game game = this.Games[id];
+
+            string response = $@"<html>
+    <head>
+        <meta charset='UTF-8'>
+        <title>Cards Against Humanity Online - {game.Name}</title>
+        <style>
+            h3 {{
+                font-size: 1.5em;
+            }}
+
+            span, p {{
+                font-size: 1em;
+            }}
+
+            .playerlist {{
+                vertical-align: top;
+            }}
+
+            .card-container {{
+                display: flex;
+                flex-wrap: nowrap;
+                -webkit-flex-wrap: wrap;
+            }}
+
+            .card {{
+                padding: 1em 1em 1em 1em;
+                margin: .5em .5em .5em .5em;
+                width: 8em;
+                min-height: 10em;
+                display: flex;
+            }}
+
+            .card > span {{
+                display: inline;
+            }}
+
+            .black-card {{
+                background: black;
+                color: white;
+            }}
+
+            .white-card {{
+                background: #dddddd;
+            }}
+        </style>
+    </head>
+    <body>
+        <h1>Cards Against Humanity Online - {game.Name}</h1>
+        <table width='100%'>
+            <tr>
+                <td>
+                    <div class='playerlist' height='100%'>
+                        <h3>Players</h3>
+                        <p>Stefan Baumann (3 points)</p>
+                    </div>
+                </td>
+                <td>
+                    <h3>Black card of the round</h3>
+                    <div class='card black-card'><span>{game.Cards.GetBlackCard().Text}</span></div>
+                    <h3>White Cards</h3>
+                    <div class='card-container'>
+                        {string.Join(Environment.NewLine, Enumerable.Range(0, 10).Select(i => $"<div class='card white-card'><span>{game.Cards.GetWhiteCard().Text}</span></div>"))}
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    Copyright 2016 © Stefan Baumann (<a href='https://github.com/stefan-baumann'>GitHub</a>)
+                </td>
+                <td>
+                    This web game is based off the card game <a href='https://www.cardsagainsthumanity.com/'>Cards Against Humanity</a> which is available for free under the <a href='https://www.cardsagainsthumanity.com/'>Creative Commons BY-NC-SA 2.0 license</a>.
+                </td>
+            </tr>
+        </table>
+    </body>
+</html>";
+            context.WriteString(response);
         }
 
         protected void ProcessJoinGameSiteRequest(HttpListenerContext context)
