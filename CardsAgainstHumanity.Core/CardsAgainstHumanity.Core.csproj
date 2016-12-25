@@ -41,7 +41,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Cards\BlackCard.cs" />
+    <Compile Include="Cards\CardDatabase.cs" />
     <Compile Include="Cards\CardSet.cs" />
+    <Compile Include="Cards\MainSet.cs" />
     <Compile Include="Cards\WhiteCard.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
