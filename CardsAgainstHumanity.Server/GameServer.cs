@@ -1,4 +1,5 @@
-﻿using CardsAgainstHumanity.Core.Cards;
+﻿using CardsAgainstHumanity.Core;
+using CardsAgainstHumanity.Core.Cards;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -47,12 +48,12 @@ namespace CardsAgainstHumanity.Server
             
             if (this.ProcessRequestInternal(path, context))
             {
-                Console.WriteLine($"Processed request for {requestTarget}.");
+                Console.WriteLine($"Processed request for {requestTarget ?? "/"}.");
             }
             else
             {
-                Console.WriteLine($"Could not process request for {requestTarget}.");
-                base.ProcessRequest(context);
+                Console.WriteLine($"Could not process request for {requestTarget}, returning empty result...");
+                //base.ProcessRequest(context);
             }
         }
 
@@ -60,36 +61,108 @@ namespace CardsAgainstHumanity.Server
         {
             switch (path[0])
             {
+                case "/":
+                    this.ProcessHomeRequest(context);
+                    return true;
                 case "test":
                     this.ProcessTestRequest(context);
+                    return true;
+                case "create":
+                    this.ProcessCreateGameRequest(context);
+                    return true;
+                case "join":
+                    this.ProcessJoinGameRequest(context);
                     return true;
                 default:
                     return false;
             }
         }
 
+        protected void ProcessHomeRequest(HttpListenerContext context)
+        {
+            string response = $@"<html>
+    <head>
+        <title>Cards Against Humanity Online</title>
+    </head>
+    <body>
+        <h1>Cards Against Humanity Online</h1>
+        <p>Welcome to Cards Against Humanity Online - a small webserver which allows you to play the game 'Cards Against Humanity' together with your friends online - have fun!</p>
+        <p>
+            <button onclick='window.location.href=""join"";'>Join Game</button>
+            <button onclick='window.location.href=""create"";'>Create Game</button>
+            <a href='/test/'>Test page</a>
+        </p>
+        <br>
+        <p>Copyright 2016 © Stefan Baumann (<a href='https://github.com/stefan-baumann'>GitHub</a>)</p>
+        <p>This web game is based off the card game <a href='https://www.cardsagainsthumanity.com/'>Cards Against Humanity</a> which is available for free under the <a href='https://www.cardsagainsthumanity.com/'>Creative Commons BY-NC-SA 2.0 license</a>.
+    </body>
+</html>";
+            context.WriteString(response);
+        }
 
+        protected void ProcessJoinGameRequest(HttpListenerContext context)
+        {
+            IEnumerable<Game> games = new[]
+            {
+                new Game() { Id = 1, Name = "Test-Game #1", Players = new List<Player>() { new Player(), new Player() } },
+                new Game() { Id = 2, Name = "Test-Game #2", Players = new List<Player>() { new Player(), new Player(), new Player(), new Player(), new Player() } }
+            };
+
+            string response = $@"<html>
+    <head>
+        <title>Cards Against Humanity Online - Join Game</title>
+    </head>
+    <body>
+        <h1>Cards Against Humanity Online - Join Game</h1>
+        <p>Click on the name of a game to join it.</p>
+        <p>
+            {string.Join(Environment.NewLine, games.Select(game => $"<p><a href='/../game/{game.Id}'>{game.Name}</a> ({game.Players.Count} players)</p>"))}
+        </p>
+        <br>
+        <p>Copyright 2016 © Stefan Baumann (<a href='https://github.com/stefan-baumann'>GitHub</a>)</p>
+        <p>This web game is based off the card game <a href='https://www.cardsagainsthumanity.com/'>Cards Against Humanity</a> which is available for free under the <a href='https://www.cardsagainsthumanity.com/'>Creative Commons BY-NC-SA 2.0 license</a>.
+    </body>
+</html>";
+            context.WriteString(response);
+        }
+
+        protected void ProcessCreateGameRequest(HttpListenerContext context)
+        {
+            string response = $@"<html>
+    <head>
+        <title>Cards Against Humanity Online - Create Game</title>
+    </head>
+    <body>
+        <h1>Cards Against Humanity Online - Create Game</h1>
+        <p>Create a new game with the specified name and password.</p>
+        <p>Name: <input id='name'></input></p>
+        <p>Password: <input id='password'></input></p>
+        <p><button onclick=''>Create Game</button></p>
+        <br>
+        <p>Copyright 2016 © Stefan Baumann (<a href='https://github.com/stefan-baumann'>GitHub</a>)</p>
+        <p>This web game is based off the card game <a href='https://www.cardsagainsthumanity.com/'>Cards Against Humanity</a> which is available for free under the <a href='https://www.cardsagainsthumanity.com/'>Creative Commons BY-NC-SA 2.0 license</a>.
+    </body>
+</html>";
+            context.WriteString(response);
+        }
 
         protected void ProcessTestRequest(HttpListenerContext context)
         {
-            HttpListenerRequest request = context.Request;
-
             BlackCard blackCard = this.CardDatabase.GetBlackCard();
             IEnumerable<WhiteCard> whiteCards = Enumerable.Repeat(1, 10).Select(o => this.CardDatabase.GetWhiteCard());
 
             string response = $@"<html>
     <head>
-
+        <title>Cards Against Humanity Online</title>
     </head>
     <body>
-        <h1>Cards Against Humanity Random Card Test</h1>
+        <h1>Cards Against Humanity Online - Random Card Test</h1>
         <h2>Random Black Card</h2>
         <p>{blackCard.Text}</p>
         <h2>Random White Cards</h2>
         {string.Join(Environment.NewLine, whiteCards.Select(card => $"<p>{card.Text}</p>"))}
     </body>
 </html>";
-
             context.WriteString(response);
         }
     }

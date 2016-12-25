@@ -8,7 +8,10 @@ namespace CardsAgainstHumanity.Core
 {
     public class Game
     {
-        public List<Player> Players { get; } = new List<Player>();
+        public int Id { get; set; }
+        public string Name { get; set; }
+
+        public List<Player> Players { get; set; } = new List<Player>();
 
         public GameState State { get; private set; }
 
