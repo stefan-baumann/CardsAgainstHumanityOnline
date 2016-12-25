@@ -11,7 +11,7 @@ namespace CardsAgainstHumanity.Server
     {
         static void Main(string[] args)
         {
-            WebServerBase server = new WebServerBase("http://*:8080/");
+            WebServerBase server = new GameServer(8080);
             server.Start();
             Console.ReadKey();
         }

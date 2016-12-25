@@ -1,4 +1,5 @@
-﻿using System;
+﻿using CardsAgainstHumanity.Core.Cards;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;

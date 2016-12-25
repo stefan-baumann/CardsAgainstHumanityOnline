@@ -39,7 +39,7 @@ namespace CardsAgainstHumanity.Server
 
         public void Start()
         {
-            Console.WriteLine("Starting webserver...");
+            Console.WriteLine($"Starting webserver on {string.Join(", ", this.Listener.Prefixes)}...");
             this.Listener.Start();
             ThreadPool.QueueUserWorkItem(state =>
             {

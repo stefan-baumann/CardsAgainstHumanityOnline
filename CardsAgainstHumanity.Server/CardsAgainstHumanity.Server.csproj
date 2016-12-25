@@ -51,5 +51,11 @@
   <ItemGroup>
     <None Include="App.config" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\CardsAgainstHumanity.Core\CardsAgainstHumanity.Core.csproj">
+      <Project>{37a76464-f1db-4a9a-b8fe-8617055b906d}</Project>
+      <Name>CardsAgainstHumanity.Core</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
