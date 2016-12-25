@@ -21,7 +21,13 @@ namespace CardsAgainstHumanity.Server
 #endif
         { }
 
-        protected CardDatabase CardDatabase { get; set; } = CardDatabase.InitializeFromSet(CardDatabase.MainSet);
+
+
+        public Dictionary<int, Game> Games { get; set; } = new Dictionary<int, Game>();
+
+        protected CardDatabase TestCardDatabase { get; set; } = CardDatabase.InitializeFromSet(CardDatabase.MainSet);
+
+
 
         public override void ProcessRequest(HttpListenerContext context)
         {
@@ -60,35 +66,53 @@ namespace CardsAgainstHumanity.Server
 
         protected bool ProcessRequestInternal(string[] path, HttpListenerContext context)
         {
+            Regex createRegex = new Regex(@"creategame\?name=(?<Name>[\w-_]+)&pass=(?<Password>[\w-_]+)");
+
+            int length = path.Length;
             switch (path[0])
             {
                 case "/":
                     this.ProcessHomeSiteRequest(context);
                     return true;
-                case "test":
-                    this.ProcessTestSiteRequest(context);
-                    return true;
-                case "create":
-                    Regex createRegex = new Regex(@"creategame\?name=(?<Name>\w+)&pass=(?<Password>\w+)");
-                    if (path.Length == 2 && createRegex.IsMatch(path[1]))
+
+                case "game" when path.Length == 2:
+                    int id;
+                    if (int.TryParse(path[1], out id))
                     {
-                        Match match = createRegex.Match(path[1]);
-                        this.ProcessCreateGameRequest(context, match.Groups["Name"].Value, match.Groups["Password"].Value);
+                        if (this.Games.ContainsKey(id))
+                        {
+                            this.ProcessGameSiteRequest(context, id);
+                            return true;
+                        }
                     }
-                    else
-                    {
-                        this.ProcessCreateGameSiteRequest(context);
-                    }
+                    return false;
+
+                case "create" when length == 1:
+                    this.ProcessCreateGameSiteRequest(context);
                     return true;
-                case "join":
+
+                case "create" when length == 2 && createRegex.IsMatch(path[1]):
+                    Match match = createRegex.Match(path[1]);
+                    this.ProcessCreateGameRequest(context, match.Groups["Name"].Value, match.Groups["Password"].Value);
+                    return true;
+
+                case "join" when length == 1:
                     this.ProcessJoinGameSiteRequest(context);
                     return true;
+
+                case "test" when length == 1:
+                    this.ProcessTestSiteRequest(context);
+                    return true;
+
                 case "favicon.ico":
-                    return true; //Just swallow
+                    return true; //Just swallow for now so it doesn't spam the console
+
                 default:
                     return false;
             }
         }
+
+
 
         protected void ProcessHomeSiteRequest(HttpListenerContext context)
         {
@@ -113,14 +137,14 @@ namespace CardsAgainstHumanity.Server
             context.WriteString(response);
         }
 
+        protected void ProcessGameSiteRequest(HttpListenerContext context, int id)
+        {
+
+        }
+
         protected void ProcessJoinGameSiteRequest(HttpListenerContext context)
         {
             Console.WriteLine($"Delivering 'join game'-page to {context.Request.UserHostAddress}...");
-            IEnumerable<Game> games = new[]
-            {
-                new Game() { Id = 1, Name = "Test-Game #1", Players = new List<Player>() { new Player(), new Player() } },
-                new Game() { Id = 2, Name = "Test-Game #2", Players = new List<Player>() { new Player(), new Player(), new Player(), new Player(), new Player() } }
-            };
 
             string response = $@"<html>
     <head>
@@ -130,7 +154,7 @@ namespace CardsAgainstHumanity.Server
         <h1>Cards Against Humanity Online - Join Game</h1>
         <p>Click on the name of a game to join it.</p>
         <p>
-            {string.Join(Environment.NewLine, games.Select(game => $"<p><a href='/../game/{game.Id}'>{game.Name}</a> ({game.Players.Count} players)</p>"))}
+            {string.Join(Environment.NewLine, this.Games.Values.Select(game => $"<p><a href='/../game/{game.Id}'>{game.Name}</a> ({game.Players.Count} players)</p>"))}
         </p>
         <br>
         <p>Copyright 2016 © Stefan Baumann (<a href='https://github.com/stefan-baumann'>GitHub</a>)</p>
@@ -177,8 +201,8 @@ namespace CardsAgainstHumanity.Server
         {
             Console.WriteLine($"Delivering the test-page to {context.Request.UserHostAddress}...");
 
-            BlackCard blackCard = this.CardDatabase.GetBlackCard();
-            IEnumerable<WhiteCard> whiteCards = Enumerable.Repeat(1, 10).Select(o => this.CardDatabase.GetWhiteCard());
+            BlackCard blackCard = this.TestCardDatabase.GetBlackCard();
+            IEnumerable<WhiteCard> whiteCards = Enumerable.Repeat(1, 10).Select(o => this.TestCardDatabase.GetWhiteCard());
 
             string response = $@"<html>
     <head>
@@ -200,7 +224,12 @@ namespace CardsAgainstHumanity.Server
         protected void ProcessCreateGameRequest(HttpListenerContext context, string name, string password)
         {
             Console.WriteLine($"{context.Request.UserHostAddress} created a new game with name '{name}' and password '{password}'.");
-            context.WriteString("1"); //Dummy-game with id 1
+
+            int id;
+            for (id = this.Games.Count; this.Games.ContainsKey(id); id++) ;
+            this.Games.Add(id, new Game() { Id = id, Name = name, Password = password, Cards = CardDatabase.InitializeFromSet(CardDatabase.MainSet) });
+
+            context.WriteString(id.ToString()); //Return the id of the created games
         }
     }
 }
