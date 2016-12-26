@@ -23,6 +23,7 @@ namespace CardsAgainstHumanity.Server
 
 
 
+        public Dictionary<int, User> Users { get; set; } = new Dictionary<int, User>();
         public Dictionary<int, Game> Games { get; set; } = new Dictionary<int, Game>();
 
         protected CardDatabase TestCardDatabase { get; set; } = CardDatabase.InitializeFromSet(CardDatabase.MainSet);
@@ -76,12 +77,12 @@ namespace CardsAgainstHumanity.Server
                     return true;
 
                 case "game" when path.Length == 2:
-                    int id;
-                    if (int.TryParse(path[1], out id))
+                    int gameId;
+                    if (int.TryParse(path[1], out gameId))
                     {
-                        if (this.Games.ContainsKey(id))
+                        if (this.Games.ContainsKey(gameId))
                         {
-                            this.ProcessGameSiteRequest(context, id);
+                            this.ProcessGameSiteRequest(context, gameId);
                             return true;
                         }
                     }
@@ -99,6 +100,21 @@ namespace CardsAgainstHumanity.Server
                 case "join" when length == 1:
                     this.ProcessJoinGameSiteRequest(context);
                     return true;
+
+                case "join" when length == 2:
+                    int joinId;
+                    if (int.TryParse(path[1], out joinId))
+                    {
+                        if (this.Games.ContainsKey(joinId))
+                        {
+                            Console.WriteLine($"{context.Request.UserHostAddress} joined game #{joinId} - {this.Games[joinId].Name}.");
+                            //TODO: Process internal stuff for joining the game
+                            context.Response.Redirect(context.Request.Url.ToString().Replace("join", "game"));
+                            //this.ProcessGameSiteRequest(context, joinId);
+                            return true;
+                        }
+                    }
+                    return false;
 
                 case "test" when length == 1:
                     this.ProcessTestSiteRequest(context);
@@ -142,6 +158,7 @@ namespace CardsAgainstHumanity.Server
             Console.WriteLine($"Delivering game-page of game #{id} to {context.Request.UserHostAddress}...");
 
             Game game = this.Games[id];
+            IEnumerable<(int index, WhiteCard card)> whiteCards = Enumerable.Range(0, 10).Select(i => (i, game.Cards.GetWhiteCard()));
 
             string response = $@"<html>
     <head>
@@ -168,7 +185,7 @@ namespace CardsAgainstHumanity.Server
 
             .card {{
                 padding: 1em 1em 1em 1em;
-                margin: .5em .5em .5em .5em;
+                margin: 0 1em 1em 0;
                 width: 8em;
                 min-height: 10em;
                 display: flex;
@@ -179,12 +196,18 @@ namespace CardsAgainstHumanity.Server
             }}
 
             .black-card {{
-                background: black;
+                background: #111111;
                 color: white;
             }}
 
             .white-card {{
-                background: #dddddd;
+                background: #efefef;
+                cursor: pointer;
+                cursor: hand;
+            }}
+
+            .white-card:hover {{
+                background: #dfdfdf;
             }}
         </style>
     </head>
@@ -203,7 +226,7 @@ namespace CardsAgainstHumanity.Server
                     <div class='card black-card'><span>{game.Cards.GetBlackCard().Text}</span></div>
                     <h3>White Cards</h3>
                     <div class='card-container'>
-                        {string.Join(Environment.NewLine, Enumerable.Range(0, 10).Select(i => $"<div class='card white-card'><span>{game.Cards.GetWhiteCard().Text}</span></div>"))}
+                        {string.Join(Environment.NewLine, whiteCards.Select(c => $@"<div class='card white-card' onclick='alert(""The white card with index {c.index} was selected."")'><span>{c.card.Text}</span></div>"))}
                     </div>
                 </td>
             </tr>
@@ -233,7 +256,7 @@ namespace CardsAgainstHumanity.Server
         <h1>Cards Against Humanity Online - Join Game</h1>
         <p>Click on the name of a game to join it.</p>
         <p>
-            {string.Join(Environment.NewLine, this.Games.Values.Select(game => $"<p><a href='/../game/{game.Id}'>{game.Name}</a> ({game.Players.Count} players)</p>"))}
+            {string.Join(Environment.NewLine, this.Games.Values.Select(game => $"<p><a href='/../join/{game.Id}'>{game.Name}</a> ({game.Players.Count} players)</p>"))}
         </p>
         <br>
         <p>Copyright 2016 © Stefan Baumann (<a href='https://github.com/stefan-baumann'>GitHub</a>)</p>
@@ -254,7 +277,7 @@ namespace CardsAgainstHumanity.Server
                 var request = new XMLHttpRequest();
                 request.onreadystatechange = function() {{
                     if (request.readyState == 4 && request.status == 200) {{
-                        window.location.href = ""/../game/"" + request.responseText;
+                        window.location.href = ""/../join/"" + request.responseText;
                     }}
                 }}
                 request.open(""GET"", ""/create/creategame?name="" + namebox.value + ""&pass="" + passwordbox.value, true);
@@ -309,6 +332,19 @@ namespace CardsAgainstHumanity.Server
             this.Games.Add(id, new Game() { Id = id, Name = name, Password = password, Cards = CardDatabase.InitializeFromSet(CardDatabase.MainSet) });
 
             context.WriteString(id.ToString()); //Return the id of the created games
+        }
+
+        protected void ProcessCreateUserRequest(HttpListenerContext context, string name)
+        {
+            if (this.Users.Values.Any(u => u.Name.ToLowerInvariant() == name.ToLowerInvariant()))
+            {
+                throw new InvalidOperationException("It is not possible to create a user with the same name as an already existing user.");
+            }
+
+            //int id;
+            //for (id = this.Users.Count; this.Users.ContainsKey(id); id++) ;
+            //User user = new User() { Id = id, Name = name, Token = Guid.NewGuid().ToString() };
+            //context.Response.AppendCookie(new Cookie("CardsAgainstHumanityOnlineUserToken", user.Token));
         }
     }
 }
