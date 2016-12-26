@@ -1,6 +1,8 @@
 # CardsAgainstHumanityOnline
 This is a web-based online multiplayer version of the card game 'Cards Against Humanity' which you can play together with your friends. This started due to me not liking how http://pretendyoure.xyz forces all players to stay connected and does not really allow long-term game sessions with long breaks.
 
+<p><b>This game is still under development - most of the pages of the website are already created and it is possible to create and join games but it is not yet possible to actually play it unfortunately. But it will probably be playable soon.</b></p>
+
 ### Some technical notes
 <p>Please bear in mind that this is the first web app I have ever developed - I had not even tried anything remotely similar to this in my whole development career. Actually I do not even posess good web development skills and miss everything but the most important basics in html, js and css which might actually be a good thing as this means that I do not use a single JS framework, a node.js server or something like that which would only make the server use more commputing power & ram and heavily increase page size and loading time, therefore making your experience worse by heavily increasing load times and the used bandwidth.</p>
 <p>Instead, this app is based around a tiny webserver (this actually was my first time doing anything web-related in C#, too) written in C# on which I built a game server which handles all the requests in a single class. All the webpages except the game-page are fully generated server-side and do not load anything else like fonts, style sheets, javascript files or images to make everything as responsible and robust as possible (also no JS frameworks as mentioned before).</p>
