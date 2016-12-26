@@ -9,7 +9,7 @@ namespace CardsAgainstHumanity.Core
 {
     public class Player
     {
-        public User User { get; private set; }
+        public User User { get; set; }
 
         public List<WhiteCard> WhiteCards { get; } = new List<WhiteCard>();
     }

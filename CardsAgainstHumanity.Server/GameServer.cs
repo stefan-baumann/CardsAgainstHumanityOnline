@@ -26,7 +26,7 @@ namespace CardsAgainstHumanity.Server
         public Dictionary<int, User> Users { get; set; } = new Dictionary<int, User>();
         public Dictionary<int, Game> Games { get; set; } = new Dictionary<int, Game>();
 
-        protected CardDatabase TestCardDatabase { get; set; } = CardDatabase.InitializeFromSet(CardDatabase.MainSet);
+        protected internal CardDatabase TestCardDatabase { get; set; } = CardDatabase.InitializeFromSet(CardDatabase.MainSet);
 
 
 
@@ -65,7 +65,7 @@ namespace CardsAgainstHumanity.Server
             }
         }
 
-        protected bool ProcessRequestInternal(string[] path, HttpListenerContext context)
+        protected internal bool ProcessRequestInternal(string[] path, HttpListenerContext context)
         {
             Regex createRegex = new Regex(@"creategame\?name=(?<Name>[\w-_]+)&pass=(?<Password>[\w-_]+)");
 
@@ -130,7 +130,7 @@ namespace CardsAgainstHumanity.Server
 
 
 
-        protected void ProcessHomeSiteRequest(HttpListenerContext context)
+        protected internal void ProcessHomeSiteRequest(HttpListenerContext context)
         {
             Console.WriteLine($"Delivering main page to {context.Request.UserHostAddress}...");
             string response = $@"<html>
@@ -153,7 +153,7 @@ namespace CardsAgainstHumanity.Server
             context.WriteString(response);
         }
 
-        protected void ProcessGameSiteRequest(HttpListenerContext context, int id)
+        protected internal void ProcessGameSiteRequest(HttpListenerContext context, int id)
         {
             Console.WriteLine($"Delivering game-page of game #{id} to {context.Request.UserHostAddress}...");
 
@@ -167,6 +167,7 @@ namespace CardsAgainstHumanity.Server
         <style>
             h3 {{
                 font-size: 1.5em;
+                margin-bottom: .25em;
             }}
 
             span, p {{
@@ -244,7 +245,7 @@ namespace CardsAgainstHumanity.Server
             context.WriteString(response);
         }
 
-        protected void ProcessJoinGameSiteRequest(HttpListenerContext context)
+        protected internal void ProcessJoinGameSiteRequest(HttpListenerContext context)
         {
             Console.WriteLine($"Delivering 'join game'-page to {context.Request.UserHostAddress}...");
 
@@ -266,7 +267,7 @@ namespace CardsAgainstHumanity.Server
             context.WriteString(response);
         }
 
-        protected void ProcessCreateGameSiteRequest(HttpListenerContext context)
+        protected internal void ProcessCreateGameSiteRequest(HttpListenerContext context)
         {
             Console.WriteLine($"Delivering 'create game'-page to {context.Request.UserHostAddress}...");
             string response = $@"<html>
@@ -299,7 +300,7 @@ namespace CardsAgainstHumanity.Server
             context.WriteString(response);
         }
 
-        protected void ProcessTestSiteRequest(HttpListenerContext context)
+        protected internal void ProcessTestSiteRequest(HttpListenerContext context)
         {
             Console.WriteLine($"Delivering the test-page to {context.Request.UserHostAddress}...");
 
@@ -323,7 +324,7 @@ namespace CardsAgainstHumanity.Server
 
 
 
-        protected void ProcessCreateGameRequest(HttpListenerContext context, string name, string password)
+        protected internal void ProcessCreateGameRequest(HttpListenerContext context, string name, string password)
         {
             Console.WriteLine($"{context.Request.UserHostAddress} created a new game with name '{name}' and password '{password}'.");
 
@@ -334,7 +335,7 @@ namespace CardsAgainstHumanity.Server
             context.WriteString(id.ToString()); //Return the id of the created games
         }
 
-        protected void ProcessCreateUserRequest(HttpListenerContext context, string name)
+        protected internal void ProcessCreateUserRequest(HttpListenerContext context, string name)
         {
             if (this.Users.Values.Any(u => u.Name.ToLowerInvariant() == name.ToLowerInvariant()))
             {
