@@ -48,8 +48,8 @@ namespace CardsAgainstHumanity.Server
                         Console.WriteLine("Creating test game with fake players and launching the browser...");
                         HttpWebRequest request = HttpWebRequest.CreateHttp($"http://localhost:{port}/create/creategame?name=test&pass=test");
                         int id = int.Parse(new StreamReader(request.GetResponse().GetResponseStream()).ReadToEnd());
-                        server.Games[id].Players.Add(new Player() { User = new User() { Id = 998, Name = "Dummy #01", Token = "a" } });
-                        server.Games[id].Players.Add(new Player() { User = new User() { Id = 999, Name = "Dummy #02", Token = "b" } });
+                        server.Games[id].Players.Add(new Player() { User = new User() { Id = 998, Name = "Dummy #01", Token = "a" }, Points = 2 });
+                        server.Games[id].Players.Add(new Player() { User = new User() { Id = 999, Name = "Dummy #02", Token = "b" }, Points = 3 });
                         Process.Start($"http://localhost:{port}/join/{id}");
                         break;
                     default:

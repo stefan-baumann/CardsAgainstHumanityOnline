@@ -219,7 +219,7 @@ namespace CardsAgainstHumanity.Server
                 <td>
                     <div class='playerlist' height='100%'>
                         <h3>Players</h3>
-                        <p>Stefan Baumann (3 points)</p>
+                        {string.Join(Environment.NewLine, game.Players.Select(p => $"<p>{p.User.Name} ({p.Points} points)</p>"))}
                     </div>
                 </td>
                 <td>

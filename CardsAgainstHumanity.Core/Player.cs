@@ -11,6 +11,8 @@ namespace CardsAgainstHumanity.Core
     {
         public User User { get; set; }
 
+        public int Points { get; set; } = 0;
+
         public List<WhiteCard> WhiteCards { get; } = new List<WhiteCard>();
     }
 }
