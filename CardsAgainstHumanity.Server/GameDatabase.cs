@@ -72,19 +72,27 @@ namespace CardsAgainstHumanity.Server
             int id;
             for (id = this.Games.Count; this.Games.ContainsKey(id); id++) ;
 
-            return new Game()
+            Game game = new Game()
             {
                 Id = id,
                 Name = name,
                 Password = password,
                 Cards = CardDatabase.InitializeFromSet(CardDatabase.MainSet)
             };
+
+            this.Games.Add(id, game);
+            return game;
         }
 
 
 
         public bool NeedsPasswordToJoin(int gameId, int userId, string token)
         {
+            if (!this.Games.ContainsKey(gameId))
+            {
+                return false;
+            }
+
             if (string.IsNullOrEmpty(this.Games[gameId].Password))
             {
                 return false;
@@ -112,7 +120,8 @@ namespace CardsAgainstHumanity.Server
                         {
                             User = this.GetUser(userId, token),
                             Points = 0,
-                            WhiteCards = Enumerable.Range(0, 10).Select(i => this.Games[gameId].Cards.GetWhiteCard()).ToList()
+                            WhiteCards = Enumerable.Range(0, 10).Select(i => this.Games[gameId].Cards.GetWhiteCard()).ToList(),
+                            ChosenCardIndex = -1
                         });
                         return true;
                     }

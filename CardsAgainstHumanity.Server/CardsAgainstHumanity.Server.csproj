@@ -47,6 +47,7 @@
   <ItemGroup>
     <Compile Include="Extensions.cs" />
     <Compile Include="GameDatabase.cs" />
+    <Compile Include="GamePageConstructor.cs" />
     <Compile Include="GameServer.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

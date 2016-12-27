@@ -19,6 +19,8 @@ namespace CardsAgainstHumanity.Core
 
         public Player Judge { get; set; }
 
+        public BlackCard CurrentBlackCard { get; set; }
+
         public CardDatabase Cards { get; set; }
     }
 

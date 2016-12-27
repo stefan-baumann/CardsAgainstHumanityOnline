@@ -39,18 +39,20 @@ namespace CardsAgainstHumanity.Server
                         return;
                     case "listgames":
                         Console.WriteLine("Active games:");
-                        foreach(Game game in server.Games.Values)
+                        foreach(Game game in server.Game.Games.Values)
                         {
                             Console.WriteLine($"#{game.Id} - {game.Name} ({game.Players.Count} players)");
                         }
                         break;
                     case "test":
                         Console.WriteLine("Creating test game with fake players and launching the browser...");
-                        HttpWebRequest request = HttpWebRequest.CreateHttp($"http://localhost:{port}/create/creategame?name=test&pass=test");
-                        int id = int.Parse(new StreamReader(request.GetResponse().GetResponseStream()).ReadToEnd());
-                        server.Games[id].Players.Add(new Player() { User = new User() { Id = 998, Name = "Dummy #01", Token = "a" }, Points = 2 });
-                        server.Games[id].Players.Add(new Player() { User = new User() { Id = 999, Name = "Dummy #02", Token = "b" }, Points = 3 });
-                        Process.Start($"http://localhost:{port}/join/{id}");
+                        Game testGame = server.Game.CreateGame("Test-Game", "test");
+                        User dummy1 = server.Game.CreateUser("Fake Player #01");
+                        User dummy2 = server.Game.CreateUser("Fake Player #02");
+                        server.Game.JoinGame(testGame.Id, "test", dummy1.Id, dummy1.Token);
+                        server.Game.JoinGame(testGame.Id, "test", dummy2.Id, dummy2.Token);
+
+                        Process.Start($"http://localhost:{port}/join?id={testGame.Id}&pass=test");
                         break;
                     default:
                         Console.WriteLine($"The command '{line}' could not be recognized.");

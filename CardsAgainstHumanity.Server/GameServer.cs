@@ -23,8 +23,7 @@ namespace CardsAgainstHumanity.Server
 
 
 
-        public Dictionary<int, User> Users { get; set; } = new Dictionary<int, User>();
-        public Dictionary<int, Game> Games { get; set; } = new Dictionary<int, Game>();
+        public GameDatabase Game { get; set; } = new GameDatabase();
 
         protected internal CardDatabase TestCardDatabase { get; set; } = CardDatabase.InitializeFromSet(CardDatabase.MainSet);
 
@@ -67,58 +66,124 @@ namespace CardsAgainstHumanity.Server
 
         protected internal bool ProcessRequestInternal(string[] path, HttpListenerContext context)
         {
-            Regex createRegex = new Regex(@"creategame\?name=(?<Name>[\w-_]+)&pass=(?<Password>[\w-_]+)");
-
             int length = path.Length;
+            
+            Regex parameterUrlRegex = new Regex(@"\A(?<Target>.*?)(?<Parameters>\?(?<Parameter>[\w-_]+=[\w-_]*)(\&(?<Parameter>[\w-_]+=[\w-_]*))*)\Z");
+            Regex parameterRegex = new Regex(@"\A(?<Name>[\w-_]+)=(?<Value>[\w-_]*)\Z");
+
+            Dictionary<string, string> parameters = new Dictionary<string, string>();
+            if (length > 0)
+            {
+                if (parameterUrlRegex.IsMatch(path.Last()))
+                {
+                    Match match = parameterUrlRegex.Match(path.Last());
+                    foreach(Capture capture in match.Groups["Parameter"].Captures)
+                    {
+                        Match parameterMatch = parameterRegex.Match(capture.Value);
+                        string name = parameterMatch.Groups["Name"].Value.ToLowerInvariant();
+                        string value = parameterMatch.Groups["Value"].Value;
+                        if (!parameters.ContainsKey(name))
+                        {
+                            parameters.Add(name, value);
+                        }
+                    }
+                    path[length - 1] = match.Groups["Target"].Value;
+                }
+            }
+
+
+
+            int gameId, userId;
             switch (path[0])
             {
-                case "/":
+                case "/": //Default main page
                     this.ProcessHomeSiteRequest(context);
                     return true;
 
-                case "game" when path.Length == 2:
-                    int gameId;
+                case "game" when path.Length == 2 && parameters.ContainsKey("uid") && parameters.ContainsKey("token"): //Game-page for authenticated users, syntax: server/game/<game-id>?uid=<user-id>&token=<user-token>
                     if (int.TryParse(path[1], out gameId))
                     {
-                        if (this.Games.ContainsKey(gameId))
+                        if (this.Game.Games.ContainsKey(gameId))
                         {
-                            this.ProcessGameSiteRequest(context, gameId);
+                            if (int.TryParse(parameters["uid"], out userId) && this.Game.VerifyUser(userId, parameters["token"]))
+                            {
+                                User user = this.Game.GetUser(userId, parameters["token"]);
+                                if (this.Game.Games[gameId].Players.Any(p => p.User == user))
+                                {
+                                    this.ProcessGameSiteRequest(context, gameId, user);
+                                }
+                                else
+                                {
+                                    context.Response.Redirect(context.Request.Url.ToString().Replace("game", "join"));
+                                }
+                            }
+                            else
+                            {
+                                context.Response.Redirect(Regex.Replace(context.Request.Url.ToString(), @"game/(?<id>\w+)\?.*\Z", @"join?id=${id}"));
+                            }
                             return true;
                         }
                     }
                     return false;
 
-                case "create" when length == 1:
+                case "game" when path.Length == 2: //Game-page for unauthenticated users - just redirects to the join-page for unauthenticated users, syntax: server/game/<game-id>
+
+                    if (int.TryParse(path[1], out gameId))
+                    {
+                        context.Response.Redirect(context.Request.Url.ToString().Replace("game", "join"));
+                        return true;
+                    }
+                    return false;
+
+                case "create" when length == 1 && parameters.ContainsKey("name") && parameters.ContainsKey("pass"): //Interface for creating games, syntax: server/create?name=<game-name>&pass=<game-password>
+                    this.ProcessCreateGameRequest(context, parameters["name"], parameters["pass"]);
+                    return true;
+
+                case "create" when length == 1: //Page for creating games, syntax: server/create/
                     this.ProcessCreateGameSiteRequest(context);
                     return true;
 
-                case "create" when length == 2 && createRegex.IsMatch(path[1]):
-                    Match match = createRegex.Match(path[1]);
-                    this.ProcessCreateGameRequest(context, match.Groups["Name"].Value, match.Groups["Password"].Value);
-                    return true;
-
-                case "join" when length == 1:
-                    this.ProcessJoinGameSiteRequest(context);
-                    return true;
-
-                case "join" when length == 2:
-                    int joinId;
-                    if (int.TryParse(path[1], out joinId))
+                case "join" when length == 1 && parameters.ContainsKey("id") && parameters.ContainsKey("pass"): //Site for joining games with known password for unauthenticated users, syntax: server/join?id=<game-id>&pass=<game-password>
+                    if (int.TryParse(parameters["id"], out gameId))
                     {
-                        if (this.Games.ContainsKey(joinId))
-                        {
-                            Console.WriteLine($"{context.Request.UserHostAddress} joined game #{joinId} - {this.Games[joinId].Name}.");
-                            //TODO: Process internal stuff for joining the game
-                            context.Response.Redirect(context.Request.Url.ToString().Replace("join", "game"));
-                            //this.ProcessGameSiteRequest(context, joinId);
-                            return true;
-                        }
+                        Console.WriteLine($"{context.Request.UserHostAddress} wants to join game #{gameId} - {this.Game.Games[gameId].Name} and password '{parameters["pass"]}'.");
+                        //if (this.Games.ContainsKey(joinId))
+                        //{
+                        //    //TODO: Process internal stuff for joining the game
+                        //    context.Response.Redirect(context.Request.Url.ToString().Replace("join", "game"));
+                        //    //this.ProcessGameSiteRequest(context, joinId);
+                        //    return true;
+                        //}
                     }
                     return false;
 
-                case "test" when length == 1:
-                    this.ProcessTestSiteRequest(context);
+                case "join" when length == 1 && parameters.ContainsKey("id"): //Site for joining games with unknown password for unauthenticated users, syntax: server/join?id=<game-id>
+                    if (int.TryParse(parameters["id"], out gameId))
+                    {
+                        Console.WriteLine($"{context.Request.UserHostAddress} wants to join game #{gameId} - {this.Game.Games[gameId].Name}.");
+                        //if (this.Games.ContainsKey(joinId))
+                        //{
+                        //    Console.WriteLine($"{context.Request.UserHostAddress} joined game #{joinId} - {this.Games[joinId].Name}.");
+                        //    //TODO: Process internal stuff for joining the game
+                        //    context.Response.Redirect(context.Request.Url.ToString().Replace("join", "game"));
+                        //    //this.ProcessGameSiteRequest(context, joinId);
+                        //    return true;
+                        //}
+
+                    }
+                    return false;
+
+                case "join" when length == 1: //Join-site which provides an overview of all active games, syntax: server/join/
+                    this.ProcessJoinGameSiteRequest(context);
                     return true;
+
+                case "verify" when length == 1 && parameters.ContainsKey("id") && parameters.ContainsKey("token"): //Interface for verifying user credentials, syntax: server/verify?id=<user-id>&token=<user-token>
+                    if (int.TryParse(parameters["id"], out userId))
+                    {
+                        this.ProcessVerifyUserRequest(context, userId, parameters["token"]);
+                        return true;
+                    }
+                    return false;
 
                 case "favicon.ico":
                     return true; //Just swallow for now so it doesn't spam the console
@@ -141,9 +206,8 @@ namespace CardsAgainstHumanity.Server
         <h1>Cards Against Humanity Online</h1>
         <p>Welcome to Cards Against Humanity Online - a small webserver which allows you to play the game 'Cards Against Humanity' together with your friends online - have fun!</p>
         <p>
-            <button onclick='window.location.href=""join"";'>Join Game</button>
-            <button onclick='window.location.href=""create"";'>Create Game</button>
-            <a href='/test/'>Test page</a>
+            <button onclick='window.location.href=""join"";'>Join a Game</button>
+            <button onclick='window.location.href=""create"";'>Create a Game</button>
         </p>
         <br>
         <p>Copyright 2016 © Stefan Baumann (<a href='https://github.com/stefan-baumann'>GitHub</a>)</p>
@@ -153,101 +217,12 @@ namespace CardsAgainstHumanity.Server
             context.WriteString(response);
         }
 
-        protected internal void ProcessGameSiteRequest(HttpListenerContext context, int id)
+        protected internal void ProcessGameSiteRequest(HttpListenerContext context, int id, User user)
         {
             Console.WriteLine($"Delivering game-page of game #{id} to {context.Request.UserHostAddress}...");
 
-            Game game = this.Games[id];
-            IEnumerable<(int index, WhiteCard card)> whiteCards = Enumerable.Range(0, 10).Select(i => (i, game.Cards.GetWhiteCard()));
-
-            string response = $@"<html>
-    <head>
-        <meta charset='UTF-8'>
-        <title>Cards Against Humanity Online - {game.Name}</title>
-        <style>
-            h3 {{
-                font-size: 1.5em;
-                margin-bottom: .25em;
-            }}
-
-            span, p {{
-                font-size: 1em;
-            }}
-
-            .playerlist {{
-                vertical-align: top;
-            }}
-
-            .card-container {{
-                display: flex;
-                flex-wrap: nowrap;
-                -webkit-flex-wrap: wrap;
-            }}
-
-            .card {{
-                padding: 1em 1em 1em 1em;
-                margin: 0 1em 1em 0;
-                width: 8em;
-                min-height: 10em;
-                display: flex;
-            }}
-
-            .card > span {{
-                display: inline;
-            }}
-
-            .black-card {{
-                background: #111111;
-                color: white;
-            }}
-
-            .white-card {{
-                background: #efefef;
-                cursor: pointer;
-                cursor: hand;
-            }}
-
-            .white-card:hover {{
-                background: #dfdfdf;
-            }}
-        </style>
-        <script language='Javascript'>
-            function chooseCard(index) {{
-                
-            }}
-        </script>
-    </head>
-    <body>
-        <h1>Cards Against Humanity Online - {game.Name}</h1>
-        <table width='100%'>
-            <tr>
-                <td>
-                    <div class='playerlist' height='100%'>
-                        <h3>Players</h3>
-                        {string.Join(Environment.NewLine, game.Players.Select(p => $"<p>{p.User.Name} ({p.Points} points)</p>"))}
-                    </div>
-                </td>
-                <td>
-                    <h3>Black card of the round</h3>
-                    <div class='card black-card'><span>{game.Cards.GetBlackCard().Text}</span></div>
-                    <h3>White Cards</h3>
-                    <div class='card-container'>
-                        {string.Join(Environment.NewLine, whiteCards.Select(c => $@"<div class='card white-card' onclick='chooseCard({c.index})'><span>{c.card.Text}</span></div>"))}
-                    </div>
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    Copyright 2016 © Stefan Baumann (<a href='https://github.com/stefan-baumann'>GitHub</a>)
-                </td>
-                <td>
-                    This web game is based off the card game <a href='https://www.cardsagainsthumanity.com/'>Cards Against Humanity</a> which is available for free under the <a href='https://www.cardsagainsthumanity.com/'>Creative Commons BY-NC-SA 2.0 license</a>.
-                </td>
-            </tr>
-        </table>
-    </body>
-</html>";
-            context.WriteString(response);
+            Game game = this.Game.Games[id];
+            context.WriteString(GamePageConstructor.ConstructGamePage(game, user));
         }
 
         protected internal void ProcessJoinGameSiteRequest(HttpListenerContext context)
@@ -262,7 +237,7 @@ namespace CardsAgainstHumanity.Server
         <h1>Cards Against Humanity Online - Join Game</h1>
         <p>Click on the name of a game to join it.</p>
         <p>
-            {string.Join(Environment.NewLine, this.Games.Values.Select(game => $"<p><a href='/../join/{game.Id}'>{game.Name}</a> ({game.Players.Count} players)</p>"))}
+            {string.Join(Environment.NewLine, this.Game.Games.Values.Select(game => $@"<p><a href='' onclick='alert(""Joining game #{game.Id}"")'>{game.Name}</a> ({game.Players.Count} players)</p>"))}
         </p>
         <br>
         <p>Copyright 2016 © Stefan Baumann (<a href='https://github.com/stefan-baumann'>GitHub</a>)</p>
@@ -283,10 +258,11 @@ namespace CardsAgainstHumanity.Server
                 var request = new XMLHttpRequest();
                 request.onreadystatechange = function() {{
                     if (request.readyState == 4 && request.status == 200) {{
-                        window.location.href = ""/../join/"" + request.responseText;
+                        //TODO: Error handling
+                        window.location.href = ""/../join?id="" + request.responseText + ""&pass="" + passwordbox.value;
                     }}
                 }}
-                request.open(""GET"", ""/create/creategame?name="" + namebox.value + ""&pass="" + passwordbox.value, true);
+                request.open(""GET"", ""/create?name="" + namebox.value + ""&pass="" + passwordbox.value, true);
                 request.send(null);
             }}
         </script>
@@ -305,57 +281,62 @@ namespace CardsAgainstHumanity.Server
             context.WriteString(response);
         }
 
-        protected internal void ProcessTestSiteRequest(HttpListenerContext context)
-        {
-            Console.WriteLine($"Delivering the test-page to {context.Request.UserHostAddress}...");
-
-            BlackCard blackCard = this.TestCardDatabase.GetBlackCard();
-            IEnumerable<WhiteCard> whiteCards = Enumerable.Repeat(1, 10).Select(o => this.TestCardDatabase.GetWhiteCard());
-
-            string response = $@"<html>
-    <head>
-        <title>Cards Against Humanity Online</title>
-    </head>
-    <body>
-        <h1>Cards Against Humanity Online - Random Card Test</h1>
-        <h2>Random Black Card</h2>
-        <p>{blackCard.Text}</p>
-        <h2>Random White Cards</h2>
-        {string.Join(Environment.NewLine, whiteCards.Select(card => $"<p>{card.Text}</p>"))}
-    </body>
-</html>";
-            context.WriteString(response);
-        }
-
 
 
         protected internal void ProcessCreateGameRequest(HttpListenerContext context, string name, string password)
         {
             Console.WriteLine($"{context.Request.UserHostAddress} created a new game with name '{name}' and password '{password}'.");
 
-            int id;
-            for (id = this.Games.Count; this.Games.ContainsKey(id); id++) ;
-            this.Games.Add(id, new Game() { Id = id, Name = name, Password = password, Cards = CardDatabase.InitializeFromSet(CardDatabase.MainSet) });
+            Game game = this.Game.CreateGame(name, password);
 
-            context.WriteString(id.ToString()); //Return the id of the created games
+            context.WriteString(game.Id.ToString());
         }
 
         protected internal void ProcessCreateUserRequest(HttpListenerContext context, string name)
         {
-            if (this.Users.Values.Any(u => u.Name.ToLowerInvariant() == name.ToLowerInvariant()))
+            if (!this.Game.CheckUsernameAvailability(name))
             {
-                throw new InvalidOperationException("It is not possible to create a user with the same name as an already existing user.");
+                context.WriteString("username taken");
+                return;
             }
 
-            //int id;
-            //for (id = this.Users.Count; this.Users.ContainsKey(id); id++) ;
-            //User user = new User() { Id = id, Name = name, Token = Guid.NewGuid().ToString() };
-            //context.Response.AppendCookie(new Cookie("CardsAgainstHumanityOnlineUserToken", user.Token));
+            User user = this.Game.CreateUser(name);
+            Console.WriteLine($"{context.Request.UserHostAddress} created a new user with name '{user.Name}' and id '{user.Id}'.");
+            context.WriteString($@"{{""id"":""{user.Id}"",""token"":""{user.Token}""}}");
         }
 
         protected internal void ProcessChooseCardRequest(HttpListenerContext context, int gameId, int userId, string userToken, int cardIndex)
         {
-            Console.WriteLine($"{context.Request.UserHostAddress} ");
+            Console.WriteLine($"{context.Request.UserHostAddress} chose card #{cardIndex} in game #{gameId}");
+            if (this.Game.VerifyUser(userId, userToken))
+            {
+                User user = this.Game.GetUser(userId, userToken);
+                if (this.Game.Games.ContainsKey(gameId) && this.Game.Games[gameId].Players.Any(p => p.User == user))
+                {
+                    Player player = this.Game.Games[gameId].Players.First(p => p.User == user);
+                    if (player.ChosenCardIndex < 0)
+                    {
+                        player.ChosenCardIndex = cardIndex;
+                    }
+                    context.WriteString("ok");
+                }
+                else
+                {
+                    Console.WriteLine("Invalid Game!");
+                    context.WriteString("invalid game");
+                }
+            }
+            else
+            {
+                Console.WriteLine("Verification failed!");
+                context.WriteString("invalid credentials");
+            }
+        }
+
+        protected internal void ProcessVerifyUserRequest(HttpListenerContext context, int id, string token)
+        {
+            Console.WriteLine($"{context.Request.UserHostAddress} tries to verify an user with id '{id}' and token '{token}'.");
+            context.WriteString(this.Game.VerifyUser(id, token) ? "ok" : "invalid credentials");
         }
     }
 }

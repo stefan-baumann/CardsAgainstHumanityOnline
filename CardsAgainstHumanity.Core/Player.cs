@@ -14,5 +14,7 @@ namespace CardsAgainstHumanity.Core
         public int Points { get; set; }
 
         public List<WhiteCard> WhiteCards { get; set; } 
+
+        public int ChosenCardIndex { get; set; }
     }
 }
