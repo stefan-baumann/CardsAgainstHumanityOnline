@@ -147,7 +147,17 @@ namespace CardsAgainstHumanity.Server
                     if (int.TryParse(parameters["id"], out gameId))
                     {
                         Console.WriteLine($"{context.Request.UserHostAddress} wants to join game #{gameId} - {this.Game.Games[gameId].Name} with password '{parameters["pass"]}'.");
-                        context.WriteString("<p>Test</p>");
+                        if (this.Game.Games.ContainsKey(gameId) && parameters["pass"] == this.Game.Games[gameId].Password)
+                        {
+                            //Right Password, authenticate user or create user and join game
+                            Console.WriteLine($"Password is correct - {context.Request.UserHostAddress} is joining game #{gameId}...");
+                        }
+                        else
+                        {
+                            Console.WriteLine($"Password is incorrect - redirecting {context.Request.UserHostAddress} to page for entering the password...");
+                            context.Response.Redirect(context.Request.Url.ToString().Remove(context.Request.Url.ToString().IndexOf("&pass=")));
+                        }
+
                         return true;
                         //if (this.Games.ContainsKey(joinId))
                         //{
@@ -271,9 +281,39 @@ namespace CardsAgainstHumanity.Server
             function joinGame() {{
                 window.location.href = ""/../join?id={id}&pass="" + passwordbox.value;
             }}
+            
+            function checkExistingAuthentication() {{
+                if (!(localStorage['authenticatedUser'] === null)) {{
+                    var user = JSON.parse(localStorage['authenticatedUser']);
+                    var request = new XMLHttpRequest();
+                    request.onreadystatechange = function() {{
+                        if (request.readyState == 4 && request.status == 200) {{
+                            if (request.responseText == 'ok') {{
+                                //TODO: Save authentication data as cookie or something similar
+
+                                var testRequest = new XMLHttpRequest();
+                                testRequest.onreadystatechange = function() {{
+                                    if (testRequest.readyState == 4 && testRequest.status == 200) {{
+                                        if (testRequest.responseText == 'true') {{
+                                            window.location.href = ""/../game/0?uid="" + user.id + ""&token="" + user.token;
+                                        }}
+                                    }}
+                                }}
+                                request.open(""GET"", ""/verifypasswordneeded?gid={id}&uid="" + user.id + ""&token="" + user.token, true);
+                                request.send(null);
+                            }} else {{
+                                localStorage['authenticatedUser'] = """";
+                            }}
+                        }}
+                    }}
+                    request.open(""GET"", ""/verify?id="" + user.id + ""&token="" + user.token, true);
+                    request.send(null);
+                }}
+
+            }}
         </script>
     </head>
-    <body>
+    <body onload='checkExistingAuthentication();'>
         <h1>Cards Against Humanity Online - Join Game {game.Name}</h1>
         <p>A password is needed to join this game.</p>
         <p>Password: <input id='passwordbox'></input></p>
