@@ -147,6 +147,8 @@ namespace CardsAgainstHumanity.Server
                     if (int.TryParse(parameters["id"], out gameId))
                     {
                         Console.WriteLine($"{context.Request.UserHostAddress} wants to join game #{gameId} - {this.Game.Games[gameId].Name} with password '{parameters["pass"]}'.");
+                        context.WriteString("<p>Test</p>");
+                        return true;
                         //if (this.Games.ContainsKey(joinId))
                         //{
                         //    //TODO: Process internal stuff for joining the game
@@ -161,15 +163,11 @@ namespace CardsAgainstHumanity.Server
                     if (int.TryParse(parameters["id"], out gameId))
                     {
                         Console.WriteLine($"{context.Request.UserHostAddress} wants to join game #{gameId} - {this.Game.Games[gameId].Name}.");
-                        //if (this.Games.ContainsKey(joinId))
-                        //{
-                        //    Console.WriteLine($"{context.Request.UserHostAddress} joined game #{joinId} - {this.Games[joinId].Name}.");
-                        //    //TODO: Process internal stuff for joining the game
-                        //    context.Response.Redirect(context.Request.Url.ToString().Replace("join", "game"));
-                        //    //this.ProcessGameSiteRequest(context, joinId);
-                        //    return true;
-                        //}
-
+                        if (this.Game.Games.ContainsKey(gameId))
+                        {
+                            this.ProcessJoinGameSiteRequest(context, gameId);
+                            return true;
+                        }
                     }
                     return false;
 
@@ -237,8 +235,41 @@ namespace CardsAgainstHumanity.Server
         <h1>Cards Against Humanity Online - Join Game</h1>
         <p>Click on the name of a game to join it.</p>
         <p>
-            {string.Join(Environment.NewLine, this.Game.Games.Values.Select(game => $@"<p><a href='' onclick='alert(""Joining game #{game.Id}"")'>{game.Name}</a> ({game.Players.Count} players)</p>"))}
+            {string.Join(Environment.NewLine, this.Game.Games.Values.Select(game => $@"<p><a href='/../join?id={game.Id}'>{game.Name}</a> ({game.Players.Count} players)</p>"))}
         </p>
+        <br>
+        <p>Copyright 2016 © Stefan Baumann (<a href='https://github.com/stefan-baumann'>GitHub</a>)</p>
+        <p>This web game is based off the card game <a href='https://www.cardsagainsthumanity.com/'>Cards Against Humanity</a> which is available for free under the <a href='https://www.cardsagainsthumanity.com/'>Creative Commons BY-NC-SA 2.0 license</a>.
+    </body>
+</html>";
+            context.WriteString(response);
+        }
+
+        protected internal void ProcessJoinGameSiteRequest(HttpListenerContext context, int id)
+        {
+            if (!this.Game.NeedsPasswordToJoin(id, -1, ""))
+            {
+                context.Response.Redirect(context.Request.Url.ToString() + "&pass=");
+                return;
+            }
+
+            Console.WriteLine($"Delivering 'join game'-password-enter-page to {context.Request.UserHostAddress}...");
+
+            Game game = this.Game.Games[id];
+            string response = $@"<html>
+    <head>
+        <title>Cards Against Humanity Online - Join Game {game.Name}</title>
+        <script language='JavaScript'>
+            function joinGame() {{
+                window.location.href = ""/../join?id={id}&pass="" + passwordbox.value;
+            }}
+        </script>
+    </head>
+    <body>
+        <h1>Cards Against Humanity Online - Join Game {game.Name}</h1>
+        <p>A password is needed to join this game.</p>
+        <p>Password: <input id='passwordbox'></input></p>
+        <p><button onclick='joinGame()'>Join Game</button></p>       
         <br>
         <p>Copyright 2016 © Stefan Baumann (<a href='https://github.com/stefan-baumann'>GitHub</a>)</p>
         <p>This web game is based off the card game <a href='https://www.cardsagainsthumanity.com/'>Cards Against Humanity</a> which is available for free under the <a href='https://www.cardsagainsthumanity.com/'>Creative Commons BY-NC-SA 2.0 license</a>.
