@@ -144,27 +144,34 @@ span, p {{
 
         private static string ConstructWhiteCardCollection(Game game, User user)
         {
-            StringBuilder result = new StringBuilder();
-
-            result.AppendLine($@"<h3>Your White Cards</h3><div class='card-container'>");
-            Player player = game.Players.First(p => p.User == user);
-            for (int i = 0; i < player.WhiteCards.Count; i++)
+            if (user != game.Judge.User)
             {
-                if (player.ChosenCardIndex > -1)
+                StringBuilder result = new StringBuilder();
+
+                result.AppendLine($@"<h3>Your White Cards</h3><div class='card-container'>");
+                Player player = game.Players.First(p => p.User == user);
+                for (int i = 0; i < player.WhiteCards.Count; i++)
                 {
-                    if (player.ChosenCardIndex != i)
+                    if (player.ChosenCardIndex > -1)
                     {
-                        result.AppendLine($@"<div class='card white-card'><span>{player.WhiteCards[i].Text}</span></div>");
+                        if (player.ChosenCardIndex != i)
+                        {
+                            result.AppendLine($@"<div class='card white-card'><span>{player.WhiteCards[i].Text}</span></div>");
+                        }
+                    }
+                    else
+                    {
+                        result.AppendLine($@"<div class='card white-card' onclick='chooseCard({i})'><span>{player.WhiteCards[i].Text}</span></div>");
                     }
                 }
-                else
-                {
-                    result.AppendLine($@"<div class='card white-card' onclick='chooseCard({i})'><span>{player.WhiteCards[i].Text}</span></div>");
-                }
-            }
-            result.AppendLine(@"</div>");
+                result.AppendLine(@"</div>");
 
-            return result.ToString();
+                return result.ToString();
+            }
+            else
+            {
+                return @"You're the judge - wait for the other players to select their cards.";
+            }
         }
     }
 }

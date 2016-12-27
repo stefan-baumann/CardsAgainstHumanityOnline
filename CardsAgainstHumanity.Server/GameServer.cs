@@ -146,7 +146,7 @@ namespace CardsAgainstHumanity.Server
                 case "join" when length == 1 && parameters.ContainsKey("id") && parameters.ContainsKey("pass"): //Site for joining games with known password for unauthenticated users, syntax: server/join?id=<game-id>&pass=<game-password>
                     if (int.TryParse(parameters["id"], out gameId))
                     {
-                        Console.WriteLine($"{context.Request.UserHostAddress} wants to join game #{gameId} - {this.Game.Games[gameId].Name} and password '{parameters["pass"]}'.");
+                        Console.WriteLine($"{context.Request.UserHostAddress} wants to join game #{gameId} - {this.Game.Games[gameId].Name} with password '{parameters["pass"]}'.");
                         //if (this.Games.ContainsKey(joinId))
                         //{
                         //    //TODO: Process internal stuff for joining the game

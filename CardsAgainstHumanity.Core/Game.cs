@@ -22,6 +22,34 @@ namespace CardsAgainstHumanity.Core
         public BlackCard CurrentBlackCard { get; set; }
 
         public CardDatabase Cards { get; set; }
+
+        public void FinishRound(Player winner)
+        {
+            winner.Points += 1;
+            this.FinishRound();
+        }
+
+        public void FinishRound()
+        {
+            this.State = GameState.PlayingCards;
+            this.Cards.RecycleBlackCard(this.CurrentBlackCard);
+            this.CurrentBlackCard = this.Cards.GetBlackCard();
+            foreach(Player player in this.Players)
+            {
+                if (player.ChosenCardIndex > -1)
+                {
+                    this.Cards.RecycleWhiteCard(player.WhiteCards[player.ChosenCardIndex]);
+                    player.WhiteCards.RemoveAt(player.ChosenCardIndex);
+                }
+
+                while (player.WhiteCards.Count < 10)
+                {
+                    player.WhiteCards.Add(this.Cards.GetWhiteCard());
+                }
+            }
+
+            this.Judge = this.Players[(this.Players.IndexOf(this.Judge) + 1) % this.Players.Count];
+        }
     }
 
     public enum GameState
