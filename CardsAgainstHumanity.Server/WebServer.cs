@@ -49,6 +49,10 @@ namespace CardsAgainstHumanity.Server
                     ThreadPool.QueueUserWorkItem(innerState =>
                     {
                         HttpListenerContext context = (HttpListenerContext)innerState;
+#if DEBUG
+                        this.ProcessRequest(context);
+                        context.Response.OutputStream.Close();
+#else
                         try
                         {
                             this.ProcessRequest(context);
@@ -61,6 +65,7 @@ namespace CardsAgainstHumanity.Server
                         {
                             context.Response.OutputStream.Close();
                         }
+#endif
                     }, this.Listener.GetContext());
                 }
             });
