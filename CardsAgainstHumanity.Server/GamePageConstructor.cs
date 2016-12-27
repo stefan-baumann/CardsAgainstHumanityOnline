@@ -9,7 +9,7 @@ namespace CardsAgainstHumanity.Server
 {
     public static class GamePageConstructor
     {
-        private static string Stylesheet { get; } = @"h3 {{
+        private static string Stylesheet { get; } = $@"h3 {{
     font-size: 1.5em;
     margin-bottom: .25em;
 }}
@@ -144,7 +144,7 @@ span, p {{
 
         private static string ConstructWhiteCardCollection(Game game, User user)
         {
-            if (user != game.Judge.User)
+            if (user != game.Judge?.User)
             {
                 StringBuilder result = new StringBuilder();
 
