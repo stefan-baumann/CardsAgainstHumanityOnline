@@ -211,6 +211,11 @@ namespace CardsAgainstHumanity.Server
                 background: #dfdfdf;
             }}
         </style>
+        <script language='Javascript'>
+            function chooseCard(index) {{
+                
+            }}
+        </script>
     </head>
     <body>
         <h1>Cards Against Humanity Online - {game.Name}</h1>
@@ -227,7 +232,7 @@ namespace CardsAgainstHumanity.Server
                     <div class='card black-card'><span>{game.Cards.GetBlackCard().Text}</span></div>
                     <h3>White Cards</h3>
                     <div class='card-container'>
-                        {string.Join(Environment.NewLine, whiteCards.Select(c => $@"<div class='card white-card' onclick='alert(""The white card with index {c.index} was selected."")'><span>{c.card.Text}</span></div>"))}
+                        {string.Join(Environment.NewLine, whiteCards.Select(c => $@"<div class='card white-card' onclick='chooseCard({c.index})'><span>{c.card.Text}</span></div>"))}
                     </div>
                 </td>
             </tr>
@@ -346,6 +351,11 @@ namespace CardsAgainstHumanity.Server
             //for (id = this.Users.Count; this.Users.ContainsKey(id); id++) ;
             //User user = new User() { Id = id, Name = name, Token = Guid.NewGuid().ToString() };
             //context.Response.AppendCookie(new Cookie("CardsAgainstHumanityOnlineUserToken", user.Token));
+        }
+
+        protected internal void ProcessChooseCardRequest(HttpListenerContext context, int gameId, int userId, string userToken, int cardIndex)
+        {
+            Console.WriteLine($"{context.Request.UserHostAddress} ");
         }
     }
 }
