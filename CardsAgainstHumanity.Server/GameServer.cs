@@ -183,6 +183,14 @@ namespace CardsAgainstHumanity.Server
                     }
                     return false;
 
+                case "verifypasswordneeded" when length == 1 && parameters.ContainsKey("gid") && parameters.ContainsKey("uid") && parameters.ContainsKey("token"): //Interface for checking whether the user with the specified credentials needs to enter a password to join the game with the specified it, syntax: server/verifypasswordneeded?gid=<game-id>&uid=<user-id>&token=<user-token>
+                    if (int.TryParse(parameters["uid"], out userId) && int.TryParse(parameters["gid"], out gameId))
+                    {
+                        this.ProcessCheckPasswordRequiredRequest(context, gameId, userId, parameters["token"]);
+                        return true;
+                    }
+                    return false;
+
                 case "favicon.ico":
                     return true; //Just swallow for now so it doesn't spam the console
 
@@ -368,6 +376,12 @@ namespace CardsAgainstHumanity.Server
         {
             Console.WriteLine($"{context.Request.UserHostAddress} tries to verify an user with id '{id}' and token '{token}'.");
             context.WriteString(this.Game.VerifyUser(id, token) ? "ok" : "invalid credentials");
+        }
+
+        protected internal void ProcessCheckPasswordRequiredRequest(HttpListenerContext context, int gameId, int userId, string token)
+        {
+            Console.WriteLine($"{context.Request.UserHostAddress} checks whether it needs to enter the password to be able to join game #{gameId}.");
+            context.WriteString(this.Game.NeedsPasswordToJoin(gameId, userId, token) ? "true" : "false");
         }
     }
 }
