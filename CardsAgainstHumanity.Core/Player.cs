@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 namespace CardsAgainstHumanity.Core
 {
     public class Player
+        : Utils.EquatableBase<Player>
     {
         public User User { get; set; }
 
@@ -16,5 +17,10 @@ namespace CardsAgainstHumanity.Core
         public List<WhiteCard> WhiteCards { get; set; } 
 
         public int ChosenCardIndex { get; set; }
+
+        protected override bool IsEqualTo(Player other)
+        {
+            return this.User == other.User && this.Points == other.Points && this.ChosenCardIndex == other.ChosenCardIndex && this.WhiteCards.SequenceEqual(other.WhiteCards);
+        }
     }
 }

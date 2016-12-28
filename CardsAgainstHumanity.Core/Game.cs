@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 namespace CardsAgainstHumanity.Core
 {
     public class Game
+        : Utils.EquatableBase<Game>
     {
         public int Id { get; set; }
         public string Name { get; set; }
@@ -49,6 +50,11 @@ namespace CardsAgainstHumanity.Core
             }
 
             this.Judge = this.Players[(this.Players.IndexOf(this.Judge) + 1) % this.Players.Count];
+        }
+
+        protected override bool IsEqualTo(Game other)
+        {
+            return this.Id == other.Id && this.Name == other.Name && this.Password == other.Password && this.Judge == other.Judge && this.State == other.State && this.Players.SequenceEqual(other.Players);
         }
     }
 
