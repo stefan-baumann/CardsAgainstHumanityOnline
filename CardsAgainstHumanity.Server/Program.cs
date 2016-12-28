@@ -17,7 +17,7 @@ namespace CardsAgainstHumanity.Server
         {
             Console.Title = "Cards Against Humanity Online Server";
             Console.WriteLine("Cards Against Humanity Online Server");
-            Console.WriteLine("Available Commands:\nopen - Open the local webpage in your default browser.\nstop - Stop the server\nlistgames - Show a list of all currently active games\ntest - Create a fake game for testing purposes");
+            Console.WriteLine("Available Commands:\nopen - Open the local webpage in your default browser.\nstop - Stop the server\nlistgames - Show a list of all currently active games\ntest - Create a fake game for testing purposes and join it with the local browser");
             Console.WriteLine(new string('-', Console.WindowWidth - 1));
 
             int port = 31815; //C/3, A/1, H/8, O/15
@@ -44,6 +44,7 @@ namespace CardsAgainstHumanity.Server
                             Console.WriteLine($"#{game.Id} - {game.Name} ({game.Players.Count} players)");
                         }
                         break;
+                    
                     case "test":
                         Console.WriteLine("Creating test game with fake players and launching the browser...");
                         Game testGame = server.Game.CreateGame("Test-Game", "test");

@@ -127,7 +127,6 @@ namespace CardsAgainstHumanity.Server
                     return false;
 
                 case "game" when path.Length == 2: //Game-page for unauthenticated users - just redirects to the join-page for unauthenticated users, syntax: server/game/<game-id>
-
                     if (int.TryParse(path[1], out gameId))
                     {
                         context.Response.Redirect(Regex.Replace(context.Request.Url.ToString(), @"game/(?<id>\d+)\Z", @"join?id=${id}"));
@@ -288,7 +287,7 @@ namespace CardsAgainstHumanity.Server
                                 var testRequest = new XMLHttpRequest();
                                 testRequest.onreadystatechange = function() {{
                                     if (testRequest.readyState == 4 && testRequest.status == 200) {{
-                                        if (testRequest.responseText == 'true') {{
+                                        if (testRequest.responseText == 'false') {{
                                             window.location.href = ""/../game/0?uid="" + user.id + ""&token="" + user.token;
                                         }}
                                     }}
