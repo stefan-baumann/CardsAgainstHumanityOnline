@@ -212,6 +212,8 @@ namespace CardsAgainstHumanity.Server
             string response = $@"<html>
     <head>
         <title>Cards Against Humanity Online</title>
+        <link rel=""shortcut icon"" href=""data:image/x-icon;,"" type=""image/x-icon"">
+        <meta charset='UTF-8'>
     </head>
     <body>
         <h1>Cards Against Humanity Online</h1>
@@ -243,6 +245,8 @@ namespace CardsAgainstHumanity.Server
             string response = $@"<html>
     <head>
         <title>Cards Against Humanity Online - Join Game</title>
+        <link rel=""shortcut icon"" href=""data:image/x-icon;,"" type=""image/x-icon"">
+        <meta charset='UTF-8'>
     </head>
     <body>
         <h1>Cards Against Humanity Online - Join Game</h1>
@@ -272,6 +276,8 @@ namespace CardsAgainstHumanity.Server
             string response = $@"<html>
     <head>
         <title>Cards Against Humanity Online - Join Game {game.Name}</title>
+        <link rel=""shortcut icon"" href=""data:image/x-icon;,"" type=""image/x-icon"">
+        <meta charset='UTF-8'>
         <script language='JavaScript'>
             function joinGame() {{
                 if (new RegExp(""^([\\w-_]+|)$"").test(passwordbox.value)) {{
@@ -360,6 +366,8 @@ namespace CardsAgainstHumanity.Server
             string response = $@"<html>
     <head>
         <title>Cards Against Humanity Online - Join Game {game.Name}</title>
+        <link rel=""shortcut icon"" href=""data:image/x-icon;,"" type=""image/x-icon"">
+        <meta charset='UTF-8'>
         <script language='JavaScript'>
             function joinGame() {{
                 if (new RegExp(""^[\\w-_]+$"").test(namebox.value)) {{
@@ -403,6 +411,8 @@ namespace CardsAgainstHumanity.Server
             string response = $@"<html>
     <head>
         <title>Cards Against Humanity Online - Create Game</title>
+        <link rel=""shortcut icon"" href=""data:image/x-icon;,"" type=""image/x-icon"">
+        <meta charset='UTF-8'>
         <script language='JavaScript'>
             function createGame() {{
                 if (new RegExp(""^[\\w_-]+$"").test(namebox.value)) {{
