@@ -274,7 +274,11 @@ namespace CardsAgainstHumanity.Server
         <title>Cards Against Humanity Online - Join Game {game.Name}</title>
         <script language='JavaScript'>
             function joinGame() {{
-                window.location.href = ""/../join?id={id}&pass="" + passwordbox.value;
+                if (new RegExp(""^([\\w-_]+|)$"").test(passwordbox.value)) {{
+                    window.location.href = ""/../join?id={id}&pass="" + passwordbox.value;
+                }} else {{
+                    alert(""The password can only contain alphanumeric characters and dashes."");
+                }}
             }}
             
             function checkExistingAuthentication() {{
@@ -358,22 +362,25 @@ namespace CardsAgainstHumanity.Server
         <title>Cards Against Humanity Online - Join Game {game.Name}</title>
         <script language='JavaScript'>
             function joinGame() {{
-                if (!(localStorage['authenticatedUser'] === null)) {{
-                    var request = new XMLHttpRequest();
-                    request.onreadystatechange = function() {{
-                        if (request.readyState == 4 && request.status == 200) {{
-                            if (request.responseText != 'username taken') {{
-                                localStorage['authenticatedUser'] = request.responseText;
-                                location.reload();
-                            }} else {{
-                                alert(""The username you entered is already used by another user."");
+                if (new RegExp(""^[\\w-_]+$"").test(namebox.value)) {{
+                    if (!(localStorage['authenticatedUser'] === null)) {{
+                        var request = new XMLHttpRequest();
+                        request.onreadystatechange = function() {{
+                            if (request.readyState == 4 && request.status == 200) {{
+                                if (request.responseText != 'username taken') {{
+                                    localStorage['authenticatedUser'] = request.responseText;
+                                    location.reload();
+                                }} else {{
+                                    alert(""The username you entered is already used by another user."");
+                                }}
                             }}
                         }}
+                        request.open(""GET"", ""/createuser?name="" + namebox.value, true);
+                        request.send(null);
                     }}
-                    request.open(""GET"", ""/createuser?name="" + namebox.value, true);
-                    request.send(null);
+                }} else {{
+                    alert(""The username can only contain alphanumeric characters and dashes."");
                 }}
-
             }}
         </script>
     </head>
@@ -398,15 +405,24 @@ namespace CardsAgainstHumanity.Server
         <title>Cards Against Humanity Online - Create Game</title>
         <script language='JavaScript'>
             function createGame() {{
-                var request = new XMLHttpRequest();
-                request.onreadystatechange = function() {{
-                    if (request.readyState == 4 && request.status == 200) {{
-                        //TODO: Error handling
-                        window.location.href = ""/../join?id="" + request.responseText + ""&pass="" + passwordbox.value;
+                if (new RegExp(""^[\\w_-]+$"").test(namebox.value)) {{
+                    if (new RegExp(""^([\\w_-]+|)$"").test(passwordbox.value)) {{
+                        var request = new XMLHttpRequest();
+                        request.onreadystatechange = function() {{
+                            if (request.readyState == 4 && request.status == 200) {{
+                                //TODO: Error handling
+                                window.location.href = ""/../join?id="" + request.responseText + ""&pass="" + passwordbox.value;
+                            }}
+                        }}
+                        request.open(""GET"", ""/create?name="" + namebox.value + ""&pass="" + passwordbox.value, true);
+                        request.send(null);
+                    }} else {{
+                        alert(""The password may only contain alphanumeric characters and dashes."");
                     }}
+                }} else {{
+                    alert(""The name can only contain alphanumeric characters and dashes."");
                 }}
-                request.open(""GET"", ""/create?name="" + namebox.value + ""&pass="" + passwordbox.value, true);
-                request.send(null);
+
             }}
         </script>
     </head>
