@@ -52,14 +52,11 @@ namespace CardsAgainstHumanity.Server
             return user;
         }
 
-        public User GetUser(int id, string token)
+        public User GetUser(int id)
         {
             if(this.Users.ContainsKey(id))
             {
-                if (this.Users[id].Token == token)
-                {
-                    return this.Users[id];
-                }
+                return this.Users[id];
             }
             return null;
         }
@@ -90,7 +87,7 @@ namespace CardsAgainstHumanity.Server
 
 
 
-        public bool NeedsPasswordToJoin(int gameId, int userId, string token)
+        public bool NeedsPasswordToJoin(int gameId, int userId)
         {
             if (!this.Games.ContainsKey(gameId))
             {
@@ -101,18 +98,18 @@ namespace CardsAgainstHumanity.Server
             {
                 return false;
             }
-            if (this.VerifyUser(userId, token) && this.Games[gameId].Players.Any(player => player.User.Id == userId))
+            if (this.Games[gameId].Players.Any(player => player.User.Id == userId))
             {
                 return false;
             }
             return true;
         }
 
-        public bool JoinGame(int gameId, string password, int userId, string token)
+        public bool JoinGame(int gameId, string password, int userId)
         {
-            if (!this.NeedsPasswordToJoin(gameId, userId, token) || this.Games[gameId].Password == password)
+            if (!this.NeedsPasswordToJoin(gameId, userId) || this.Games[gameId].Password == password)
             {
-                if (this.VerifyUser(userId, token))
+                if (this.Users.ContainsKey(userId))
                 {
                     if (this.Games[gameId].Players.Any(player => player.User.Id == userId))
                     {
@@ -122,7 +119,7 @@ namespace CardsAgainstHumanity.Server
                     {
                         this.Games[gameId].Players.Add(new Player()
                         {
-                            User = this.GetUser(userId, token),
+                            User = this.GetUser(userId),
                             Points = 0,
                             WhiteCards = Enumerable.Range(0, 10).Select(i => this.Games[gameId].Cards.GetWhiteCard()).ToList(),
                             ChosenCardIndex = -1

@@ -11,10 +11,14 @@ namespace CardsAgainstHumanity.Server
     {
         public static void WriteString(this HttpListenerContext context, string data)
         {
-            byte[] buffer = Encoding.UTF8.GetBytes(data);
-            context.Response.ContentEncoding = Encoding.UTF8;
-            context.Response.ContentLength64 = buffer.Length;
-            context.Response.OutputStream.Write(buffer, 0, buffer.Length);
+            try
+            {
+                byte[] buffer = Encoding.UTF8.GetBytes(data);
+                context.Response.ContentEncoding = Encoding.UTF8;
+                context.Response.ContentLength64 = buffer.Length;
+                context.Response.OutputStream.Write(buffer, 0, buffer.Length);
+            }
+            catch { }
         }
     }
 }

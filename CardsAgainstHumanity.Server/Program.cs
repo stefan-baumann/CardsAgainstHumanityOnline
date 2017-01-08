@@ -50,10 +50,10 @@ namespace CardsAgainstHumanity.Server
                         Game testGame = server.Game.CreateGame("Test-Game", "test");
                         User dummy1 = server.Game.CreateUser("Fake Player #01");
                         User dummy2 = server.Game.CreateUser("Fake Player #02");
-                        server.Game.JoinGame(testGame.Id, "test", dummy1.Id, dummy1.Token);
-                        server.Game.JoinGame(testGame.Id, "test", dummy2.Id, dummy2.Token);
+                        server.Game.JoinGame(testGame.Id, "test", dummy1.Id);
+                        server.Game.JoinGame(testGame.Id, "test", dummy2.Id);
 
-                        Process.Start($"http://localhost:{port}/join?id={testGame.Id}&pass=test");
+                        Process.Start($"http://localhost:{port}/join/{testGame.Id}?pass=test");
                         break;
                     default:
                         Console.WriteLine($"The command '{line}' could not be recognized.");

@@ -60,8 +60,7 @@ span, p {{
             return $@"<html>
     <head>
         <title>Cards Against Humanity Online - {game.Name}</title>
-        <meta charset='UTF-8'>
-        <link rel=""shortcut icon"" href=""data:image/x-icon;,"" type=""image/x-icon"">
+{GameServer.DefaultHeader}
         <style>
             {GamePageConstructor.Stylesheet}
         </style>
