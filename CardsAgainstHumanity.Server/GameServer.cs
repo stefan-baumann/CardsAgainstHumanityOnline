@@ -33,7 +33,7 @@ namespace CardsAgainstHumanity.Server
         {
             string requestTarget = context.Request.RawUrl.Trim();
 
-            //Console.WriteLine($"{context.Request.UserHostAddress} requested '{requestTarget}'");
+            Console.WriteLine($"{context.Request.UserHostAddress} requested '{requestTarget}'");
 
             if (requestTarget.StartsWith("/"))
             {
@@ -169,15 +169,22 @@ namespace CardsAgainstHumanity.Server
                                     }
                                     else
                                     {
-                                        //context.Response.Redirect(Regex.Replace(context.Request.Url.ToString(), @"\?pass(.*)", ""));
                                         this.ProcessJoinGameSiteRequest(context, gameId);
                                     }
                                     return true;
                                 }
                                 context.Response.Redirect(Regex.Replace(context.Request.Url.ToString(), "/join.*", "/join"));
                                 return true;
-                            case "refreshgame" when length == 2 && parameters.Count == 0:
-
+                            case "refreshgame" when length == 2 && parameters.Count == 0: //Interface for getting the updated content of the game page (authenticated), syntax: server/refreshgame/<GID>
+                                if (int.TryParse(path[1], out gameId) && this.Game.Games.ContainsKey(gameId))
+                                {
+                                    if (this.VerifyInternal(context, out userId) && this.Game.Games[gameId].Players.Any(p => p.User.Id == userId))
+                                    {
+                                        context.WriteString(GamePageConstructor.ConstructRefreshPage(this.Game.Games[gameId], this.Game.GetUser(userId)));
+                                        return true;
+                                    }
+                                }
+                                context.WriteString(string.Empty);
                                 return true;
                         }
                     }

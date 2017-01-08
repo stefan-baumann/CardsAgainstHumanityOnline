@@ -68,19 +68,35 @@ span, p {{
             function chooseCard(index) {{
                 alert('You chose card #' + index);
             }}
+            
+            var intervalId = 0;
+            function refresh() {{
+                console.log(""Refreshing the game..."");
+                var request = new XMLHttpRequest();
+                request.onreadystatechange = function() {{
+                    if (request.readyState == 4 && request.status == 200) {{
+                        if (request.responseText == """") {{
+                            clearInterval(intervalId);
+                        }}
+                        document.getElementById(""content"").innerHTML = request.responseText;
+                    }}
+                }}
+                request.open(""GET"", ""/refreshgame/{game.Id}"", true);
+                request.send(null);
+            }}
+
+            (function () {{
+                intervalId = setInterval(function() {{
+                    refresh(); 
+                }}, 2500);
+            }})();
         </script>
     </head>
     <body>
         <h1>Cards Against Humanity Online - {game.Name}</h1>
         <table width='100%'>
-            <tr>
-                <td>
-                    {GamePageConstructor.ConstructPlayerList(game, user)}
-                </td>
-                <td>
-                    {GamePageConstructor.ConstructField(game, user)}
-                    {GamePageConstructor.ConstructWhiteCardCollection(game, user)}
-                </td>
+            <tr id='content'>
+                {GamePageConstructor.ConstructRefreshPage(game, user)}
             </tr>
             <tr>
                 <td>
@@ -93,6 +109,17 @@ span, p {{
         </table>
     </body>
 </html>";
+        }
+
+        public static string ConstructRefreshPage(Game game, User user)
+        {
+            return $@"<td>
+    {GamePageConstructor.ConstructPlayerList(game, user)}
+</td>
+<td>
+    {GamePageConstructor.ConstructField(game, user)}
+    {GamePageConstructor.ConstructWhiteCardCollection(game, user)}
+</td>";
         }
 
         private static string ConstructPlayerList(Game game, User user)

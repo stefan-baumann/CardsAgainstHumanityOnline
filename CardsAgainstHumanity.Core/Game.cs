@@ -24,6 +24,11 @@ namespace CardsAgainstHumanity.Core
 
         public CardDatabase Cards { get; set; }
 
+        public void RefreshState()
+        {
+
+        }
+
         public void FinishRound(Player winner)
         {
             winner.Points += 1;
