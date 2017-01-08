@@ -80,7 +80,7 @@ namespace CardsAgainstHumanity.Core
                         return;
 
                     case GameState.PlayingCards:
-                        if (this.Players.All(player => this.PlayedWhiteCards.ContainsKey(player)))
+                        if (this.Players.All(player => this.Judge == player || this.PlayedWhiteCards.ContainsKey(player)))
                         {
                             //All players have selected a card, start judging
 
@@ -107,7 +107,7 @@ namespace CardsAgainstHumanity.Core
                             this.RoundWinner.Points++;
                             this.RoundWinner = null;
                             this.Cards.Recycle(this.CurrentBlackCard);
-                            this.CurrentBlackCard = null;
+                            this.CurrentBlackCard = this.Cards.DrawBlackCard();
                             this.JudgeIndex++;
                             foreach(WhiteCard card in this.PlayedWhiteCards.Values)
                             {

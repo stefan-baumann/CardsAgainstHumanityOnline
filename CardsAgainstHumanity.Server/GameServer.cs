@@ -33,7 +33,7 @@ namespace CardsAgainstHumanity.Server
         {
             string requestTarget = context.Request.RawUrl.Trim();
 
-            Console.WriteLine($"{context.Request.UserHostAddress} requested '{requestTarget}'");
+            //Console.WriteLine($"{context.Request.UserHostAddress} requested '{requestTarget}'");
 
             if (requestTarget.StartsWith("/"))
             {

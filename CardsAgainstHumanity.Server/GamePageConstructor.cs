@@ -109,7 +109,7 @@ span, p {{
             (function () {{
                 intervalId = setInterval(function() {{
                     refresh(); 
-                }}, 2500);
+                }}, 500);
             }})();
         </script>
     </head>
@@ -179,7 +179,14 @@ span, p {{
                     case GameState.PlayingCards:
                         foreach (var playedCard in game.PlayedWhiteCards)
                         {
-                            result.AppendLine($@"<div class='card white-card'><span></span></div>");
+                            if (playedCard.Key == player)
+                            {
+                                result.AppendLine($@"<div class='card white-card'>{playedCard.Value.Text}<span></span></div>");
+                            }
+                            else
+                            {
+                                result.AppendLine($@"<div class='card white-card'><span></span></div>");
+                            }
                         }
                         break;
 
@@ -196,7 +203,10 @@ span, p {{
                 switch (game.State)
                 {
                     case GameState.PlayingCards:
-                        result.AppendLine($@"<p>You're the judge. Wait for the other players to choose their cards.</p>");
+                        foreach (var playedCard in game.PlayedWhiteCards)
+                        {
+                            result.AppendLine($@"<div class='card white-card'><span></span></div>");
+                        }
                         break;
 
                     case GameState.Judging:
@@ -241,7 +251,14 @@ span, p {{
             }
             else
             {
-                return @"You're the judge - wait for the other players to select their cards.";
+                if (game.State == GameState.Judging)
+                {
+                    return @"<p>You're the judge - select the card you like the most.<p><br>";
+                }
+                else
+                {
+                    return @"<p>You're the judge - wait for the other players to select their cards.<p><br>";
+                }
             }
         }
     }
