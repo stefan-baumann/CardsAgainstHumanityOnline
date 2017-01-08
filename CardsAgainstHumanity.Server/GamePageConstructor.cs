@@ -1,4 +1,5 @@
 ﻿using CardsAgainstHumanity.Core;
+using CardsAgainstHumanity.Core.Cards;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -66,7 +67,27 @@ span, p {{
         </style>
         <script language='Javascript'>
             function chooseCard(index) {{
-                alert('You chose card #' + index);
+                console.log(""Choosing card #"" + index + ""..."");
+                var request = new XMLHttpRequest();
+                request.onreadystatechange = function() {{
+                    if (request.readyState == 4 && request.status == 200) {{
+                        refresh();
+                    }}
+                }}
+                request.open(""GET"", ""/game/{game.Id}/do/playcard?index="" + index, true);
+                request.send(null);
+            }}
+
+            function chooseCardJudge(index) {{
+                console.log(""Choosing card #"" + index + "" as the winning card..."");
+                var request = new XMLHttpRequest();
+                request.onreadystatechange = function() {{
+                    if (request.readyState == 4 && request.status == 200) {{
+                        refresh();
+                    }}
+                }}
+                request.open(""GET"", ""/game/{game.Id}/do/judge?index="" + index, true);
+                request.send(null);
             }}
             
             var intervalId = 0;
@@ -134,7 +155,7 @@ span, p {{
                 {
                     result.Append(@" (Judge)");
                 }
-                else if (player.ChosenCardIndex > -1)
+                else if (game.PlayedWhiteCards.ContainsKey(player))
                 {
                     result.Append(@" (Played)");
                 }
@@ -149,19 +170,42 @@ span, p {{
         {
             StringBuilder result = new StringBuilder();
 
-            result.AppendLine($@"<h3>Field</h3><div class='card-container'><div class='card black-card'><span>{game.CurrentBlackCard.Text}</span></div>");
-            foreach (Player player in game.Players)
+            result.AppendLine($@"<h3>Field</h3><div class='card-container'><div class='card black-card'><span>{game.CurrentBlackCard?.Text}</span></div>");
+            Player player = game.Players.First(p => p.User == user);
+            if (player != game.Judge)
             {
-                if (player.ChosenCardIndex > -1)
+                switch (game.State)
                 {
-                    if (game.State == GameState.Judging)
-                    {
-                        result.AppendLine($@"<div class='card white-card'><span>{player.WhiteCards[player.ChosenCardIndex].Text}</span></div>");
-                    }
-                    else
-                    {
-                        result.AppendLine($@"<div class='card white-card'><span></span></div>");
-                    }
+                    case GameState.PlayingCards:
+                        foreach (var playedCard in game.PlayedWhiteCards)
+                        {
+                            result.AppendLine($@"<div class='card white-card'><span></span></div>");
+                        }
+                        break;
+
+                    case GameState.Judging:
+                        foreach (var playedCard in game.PlayedWhiteCards)
+                        {
+                            result.AppendLine($@"<div class='card white-card'><span>{playedCard.Value.Text}</span></div>");
+                        }
+                        break;
+                }
+            }
+            else
+            {
+                switch (game.State)
+                {
+                    case GameState.PlayingCards:
+                        result.AppendLine($@"<p>You're the judge. Wait for the other players to choose their cards.</p>");
+                        break;
+
+                    case GameState.Judging:
+                        List<WhiteCard> whiteCards = game.PlayedWhiteCards.Values.ToList();
+                        for (int i = 0; i < game.PlayedWhiteCards.Count; i++)
+                        {
+                            result.AppendLine($@"<div class='card white-card' onclick='chooseCardJudge({i})'><span>{whiteCards[i].Text}</span></div>");
+                        }
+                        break;
                 }
             }
             result.AppendLine(@"</div>");
@@ -177,16 +221,16 @@ span, p {{
 
                 result.AppendLine($@"<h3>Your White Cards</h3><div class='card-container'>");
                 Player player = game.Players.First(p => p.User == user);
-                for (int i = 0; i < player.WhiteCards.Count; i++)
+                if (game.PlayedWhiteCards.ContainsKey(player))
                 {
-                    if (player.ChosenCardIndex > -1)
+                    for (int i = 0; i < player.WhiteCards.Count; i++)
                     {
-                        if (player.ChosenCardIndex != i)
-                        {
-                            result.AppendLine($@"<div class='card white-card'><span>{player.WhiteCards[i].Text}</span></div>");
-                        }
+                        result.AppendLine($@"<div class='card white-card'><span>{player.WhiteCards[i].Text}</span></div>");
                     }
-                    else
+                }
+                else
+                {
+                    for (int i = 0; i < player.WhiteCards.Count; i++)
                     {
                         result.AppendLine($@"<div class='card white-card' onclick='chooseCard({i})'><span>{player.WhiteCards[i].Text}</span></div>");
                     }

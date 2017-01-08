@@ -124,6 +124,65 @@ namespace CardsAgainstHumanity.Core
             }
         }
 
+
+
+        public void ExecuteGameCommand(Player player, string command, Dictionary<string, string> parameters)
+        {
+            int index;
+            switch (command)
+            {
+                case "playcard" when parameters.Count == 1 && parameters.ContainsKey("index"):
+                    if (int.TryParse(parameters["index"], out index) && index < player.WhiteCards.Count)
+                    {
+                        if (!this.PlayedWhiteCards.ContainsKey(player))
+                        {
+                            Console.WriteLine($"[{this.Name} / #{this.Id}] {player.User.Name} played card #{index}.");
+
+                            WhiteCard card = player.WhiteCards[index];
+                            this.PlayedWhiteCards.Add(player, card);
+                            player.WhiteCards.Remove(card);
+                        }
+                        else
+                        {
+                            Console.WriteLine($"[{this.Name} / #{this.Id}] {player.User.Name} tried playing a card although he has already done so.");
+                        }
+                    }
+                    else
+                    {
+                        Console.WriteLine($"[{this.Name} / #{this.Id}] {player.User.Name} tried playing a card with an invalid index ({index}).");
+                    }
+                    return;
+                
+                case "judge" when parameters.Count == 1 && parameters.ContainsKey("index"):
+                    if (int.TryParse(parameters["index"], out index) && index < this.PlayedWhiteCards.Count)
+                    {
+                        if (this.Judge == player)
+                        {
+                            if (this.RoundWinner == null)
+                            {
+                                Console.WriteLine($"[{this.Name} / #{this.Id}] Judge {player.User.Name} chose card #{index}.");
+                                this.RoundWinner = this.PlayedWhiteCards.Keys.ElementAt(index);
+                            }
+                            else
+                            {
+                                Console.WriteLine($"[{this.Name} / #{this.Id}] {player.User.Name} tried judging although he has already chosen.");
+                            }
+                        }
+                        else
+                        {
+                            Console.WriteLine($"[{this.Name} / #{this.Id}] {player.User.Name} tried judging although he is not a judge.");
+                        }
+                    }
+                    else
+                    {
+                        Console.WriteLine($"[{this.Name} / #{this.Id}] {player.User.Name} tried judging a card with an invalid index ({index}).");
+                    }
+                    return;
+            }
+        }
+
+
+
         protected override bool IsEqualTo(Game other)
         {
             return this.Id == other.Id && this.Name == other.Name && this.Password == other.Password && this.Judge == other.Judge && this.State == other.State && this.Players.SequenceEqual(other.Players);

@@ -175,15 +175,30 @@ namespace CardsAgainstHumanity.Server
                                 }
                                 context.Response.Redirect(Regex.Replace(context.Request.Url.ToString(), "/join.*", "/join"));
                                 return true;
-                            case "refreshgame" when length == 2 && parameters.Count == 0: //Interface for getting the updated content of the game page (authenticated), syntax: server/refreshgame/<GID>
+
+                            case "refreshgame" when length == 2 && parameters.Count == 0: //Interface for getting the updated content of the game page (authenticated, user must be a player), syntax: server/refreshgame/<GID>
                                 if (int.TryParse(path[1], out gameId) && this.Game.Games.ContainsKey(gameId))
                                 {
                                     if (this.VerifyInternal(context, out userId) && this.Game.Games[gameId].Players.Any(p => p.User.Id == userId))
                                     {
+                                        this.Game.Games[gameId].RefreshState();
                                         context.WriteString(GamePageConstructor.ConstructRefreshPage(this.Game.Games[gameId], this.Game.GetUser(userId)));
                                         return true;
                                     }
                                 }
+                                context.WriteString(string.Empty);
+                                return true;
+
+                            case "game" when length == 4 && path[2] == "do": //Interface for game-commands (authenticated, user must be a player), syntax: server/game/<GID>/do/<Method>[?<parameters>=<values>]
+                                if (int.TryParse(path[1], out gameId) && this.Game.Games.ContainsKey(gameId))
+                                {
+                                    Player player = this.Game.Games[gameId].Players.FirstOrDefault(p => p.User.Id == userId);
+                                    if (this.VerifyInternal(context, out userId) && player != null)
+                                    {
+                                        this.Game.Games[gameId].ExecuteGameCommand(player, path[3], parameters);
+                                    }
+                                }
+
                                 context.WriteString(string.Empty);
                                 return true;
                         }
@@ -478,34 +493,6 @@ function verify(reload) {
             Console.WriteLine($"{context.Request.UserHostAddress} created a new user with name '{user.Name}' and id '{user.Id}'.");
             context.Response.SetCookie(new Cookie("authenticatedUser", $"{user.Id}|{user.Token}", "/"));
             context.WriteString($@"{{""id"":""{user.Id}"",""token"":""{user.Token}""}}");
-        }
-
-        protected internal void ProcessChooseCardRequest(HttpListenerContext context, int gameId, int userId, string userToken, int cardIndex)
-        {
-            Console.WriteLine($"{context.Request.UserHostAddress} chose card #{cardIndex} in game #{gameId}");
-            if (this.Game.VerifyUser(userId, userToken))
-            {
-                User user = this.Game.GetUser(userId);
-                if (this.Game.Games.ContainsKey(gameId) && this.Game.Games[gameId].Players.Any(p => p.User == user))
-                {
-                    Player player = this.Game.Games[gameId].Players.First(p => p.User == user);
-                    if (player.ChosenCardIndex < 0)
-                    {
-                        player.ChosenCardIndex = cardIndex;
-                    }
-                    context.WriteString("ok");
-                }
-                else
-                {
-                    Console.WriteLine("Invalid Game!");
-                    context.WriteString("invalid game");
-                }
-            }
-            else
-            {
-                Console.WriteLine("Verification failed!");
-                context.WriteString("invalid credentials");
-            }
         }
 
         protected internal void ProcessVerifyUserRequest(HttpListenerContext context, int id, string token)
