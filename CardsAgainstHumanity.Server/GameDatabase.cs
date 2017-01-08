@@ -79,7 +79,6 @@ namespace CardsAgainstHumanity.Server
                 Cards = CardDatabase.InitializeFromSet(CardDatabase.MainSet),
                 State = GameState.Inactive
             };
-            game.CurrentBlackCard = game.Cards.GetBlackCard();
 
             this.Games.Add(id, game);
             return game;
@@ -121,13 +120,8 @@ namespace CardsAgainstHumanity.Server
                         {
                             User = this.GetUser(userId),
                             Points = 0,
-                            WhiteCards = Enumerable.Range(0, 10).Select(i => this.Games[gameId].Cards.GetWhiteCard()).ToList(),
-                            ChosenCardIndex = -1
+                            WhiteCards = new List<WhiteCard>()
                         });
-                        if (this.Games[gameId].Judge == null)
-                        {
-                            this.Games[gameId].Judge = this.Games[gameId].Players[0];
-                        }
 
                         return true;
                     }

@@ -18,43 +18,110 @@ namespace CardsAgainstHumanity.Core
 
         public GameState State { get; set; } = GameState.Inactive;
 
-        public Player Judge { get; set; }
+        protected int JudgeIndex { get; set; } = 0;
+        public Player Judge { get => this.Players[this.JudgeIndex % this.Players.Count]; }
 
         public BlackCard CurrentBlackCard { get; set; }
 
+        public Dictionary<Player, WhiteCard> PlayedWhiteCards { get; set; } = new Dictionary<Player, WhiteCard>();
+        
+        public Player RoundWinner { get; set; }
+
+        public Stack<RoundResult> LastRounds { get; set; } = new Stack<RoundResult>();
+
         public CardDatabase Cards { get; set; }
 
+        private object stateLockObject = new object();
         public void RefreshState()
         {
-
-        }
-
-        public void FinishRound(Player winner)
-        {
-            winner.Points += 1;
-            this.FinishRound();
-        }
-
-        public void FinishRound()
-        {
-            this.State = GameState.PlayingCards;
-            this.Cards.RecycleBlackCard(this.CurrentBlackCard);
-            this.CurrentBlackCard = this.Cards.GetBlackCard();
-            foreach(Player player in this.Players)
+            lock (this.stateLockObject)
             {
-                if (player.ChosenCardIndex > -1)
+                //Check whether eough players are there
+                if (this.Players.Count < 3)
                 {
-                    this.Cards.RecycleWhiteCard(player.WhiteCards[player.ChosenCardIndex]);
-                    player.WhiteCards.RemoveAt(player.ChosenCardIndex);
+                    this.State = GameState.Inactive;
+                    if (this.CurrentBlackCard != null)
+                    {
+                        this.Cards.Recycle(this.CurrentBlackCard);
+                        this.CurrentBlackCard = null;
+                    }
                 }
 
-                while (player.WhiteCards.Count < 10)
+                //Remove played cards of players who left
+                foreach (var playedCard in this.PlayedWhiteCards)
                 {
-                    player.WhiteCards.Add(this.Cards.GetWhiteCard());
+                    if (!this.Players.Contains(playedCard.Key))
+                    {
+                        this.PlayedWhiteCards.Remove(playedCard.Key);
+                    }
+                }
+                
+                switch (this.State)
+                {
+                    case GameState.Inactive:
+                        if (this.Players.Count >= 3)
+                        {
+                            //Enough players, start round
+
+                            if (this.CurrentBlackCard == null)
+                            {
+                                //Select new black card
+                                this.CurrentBlackCard = this.Cards.DrawBlackCard();
+                            }
+                            foreach (Player player in this.Players)
+                            {
+                                //Fill up the cards of each player
+                                for (; player.WhiteCards.Count < 10; player.WhiteCards.Add(this.Cards.DrawWhiteCard())) ;
+                            }
+
+                            this.State = GameState.PlayingCards;
+                            this.RefreshState();
+                        }
+                        return;
+
+                    case GameState.PlayingCards:
+                        if (this.Players.All(player => this.PlayedWhiteCards.ContainsKey(player)))
+                        {
+                            //All players have selected a card, start judging
+
+                            this.RoundWinner = null;
+
+                            this.State = GameState.Judging;
+                            this.RefreshState();
+                        }
+                        return;
+
+                    case GameState.Judging:
+                        if (this.RoundWinner != null)
+                        {
+                            //Judging has ended, refresh scoreboard and return to game
+                            this.LastRounds.Push(new RoundResult()
+                            {
+                                Winner = this.RoundWinner,
+                                WinningCard = this.PlayedWhiteCards[this.RoundWinner],
+                                BlackCard = this.CurrentBlackCard,
+                                WhiteCards = this.PlayedWhiteCards.Values.ToList(),
+                                Judge = this.Judge
+                            });
+
+                            this.RoundWinner.Points++;
+                            this.RoundWinner = null;
+                            this.Cards.Recycle(this.CurrentBlackCard);
+                            this.CurrentBlackCard = null;
+                            this.JudgeIndex++;
+                            foreach(WhiteCard card in this.PlayedWhiteCards.Values)
+                            {
+                                this.Cards.Recycle(card);
+                            }
+                            this.PlayedWhiteCards.Clear();
+
+                            this.State = GameState.PlayingCards;
+                            this.RefreshState();
+                        }
+
+                        return;
                 }
             }
-
-            this.Judge = this.Players[(this.Players.IndexOf(this.Judge) + 1) % this.Players.Count];
         }
 
         protected override bool IsEqualTo(Game other)

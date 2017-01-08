@@ -28,22 +28,22 @@ namespace CardsAgainstHumanity.Core.Cards
 
 
 
-        public BlackCard GetBlackCard()
+        public BlackCard DrawBlackCard()
         {
             return this.BlackCards.Dequeue();
         }
 
-        public WhiteCard GetWhiteCard()
+        public WhiteCard DrawWhiteCard()
         {
             return this.WhiteCards.Dequeue();
         }
 
-        public void RecycleBlackCard(BlackCard card)
+        public void Recycle(BlackCard card)
         {
             this.BlackCards.Enqueue(card);
         }
 
-        public void RecycleWhiteCard(WhiteCard card)
+        public void Recycle(WhiteCard card)
         {
             this.WhiteCards.Enqueue(card);
         }

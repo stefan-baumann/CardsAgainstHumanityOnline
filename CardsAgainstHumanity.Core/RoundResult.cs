@@ -7,18 +7,13 @@ using System.Threading.Tasks;
 
 namespace CardsAgainstHumanity.Core
 {
-    public class Player
-        : Utils.EquatableBase<Player>
+    public class RoundResult
     {
-        public User User { get; set; }
+        public Player Winner { get; set; }
+        public WhiteCard WinningCard { get; set; }
 
-        public int Points { get; set; } = 0;
-
+        public BlackCard BlackCard { get; set; }
         public List<WhiteCard> WhiteCards { get; set; }
-
-        protected override bool IsEqualTo(Player other)
-        {
-            return this.User == other.User;
-        }
+        public Player Judge { get; set; }
     }
 }

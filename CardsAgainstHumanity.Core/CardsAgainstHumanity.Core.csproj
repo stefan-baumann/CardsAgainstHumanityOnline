@@ -45,6 +45,7 @@
     <Compile Include="Cards\CardSet.cs" />
     <Compile Include="Cards\MainSet.cs" />
     <Compile Include="Cards\WhiteCard.cs" />
+    <Compile Include="RoundResult.cs" />
     <Compile Include="Utils\EquatableBase.cs" />
     <Compile Include="Game.cs" />
     <Compile Include="Player.cs" />
