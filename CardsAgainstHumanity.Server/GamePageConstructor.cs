@@ -10,51 +10,89 @@ namespace CardsAgainstHumanity.Server
 {
     public static class GamePageConstructor
     {
-        private static string Stylesheet { get; } = $@"h3 {{
-    font-size: 1.5em;
-    margin-bottom: .25em;
-}}
-
-span, p {{
-    font-size: 1em;
-}}
-
-.playerlist {{
+        private static string Stylesheet { get; } = @".playerlist {
     vertical-align: top;
-}}
+}
 
-.card-container {{
+.card-container {
     display: flex;
     flex-wrap: nowrap;
     -webkit-flex-wrap: wrap;
-}}
+}
 
-.card {{
-    padding: 1em 1em 1em 1em;
-    margin: 0 1em 1em 0;
-    width: 8em;
-    min-height: 10em;
-    display: flex;
-}}
-
-.card > span {{
+.card > span {
     display: inline;
-}}
+}
 
-.black-card {{
+.black-card {
     background: #111111;
     color: white;
-}}
+}
 
-.white-card {{
+.white-card {
     background: #efefef;
     cursor: pointer;
     cursor: hand;
-}}
+}
 
-.white-card:hover {{
+.white-card:hover {
     background: #dfdfdf;
-}}";
+}
+
+@media (min-width:320px) {
+	h1 {
+		font-size: 4vw;
+		margin-bottom: 1vw;
+	}
+	h3 {
+		margin-top: 0vw;
+		margin-bottom: 1vw;
+	    font-size: 3vw;
+	}
+
+	span, p, b, body, tr, td, table, div {
+	    font-size: 2.5vw;
+	}
+
+	.card {
+	    padding: 1vw 1vw 1vw 1vw;
+	    margin: 0 1vw 1vw 0;
+	    width: 16vw;
+	    min-height: 20vw;
+	    display: flex;
+	}
+
+    #field {
+        margin-bottom: 6vw;
+    }
+}
+@media (min-width:1200px) {
+	h1 {
+		font-size: 2vw;
+		margin-bottom: .5vw;
+	}
+	h3 {
+		margin-top: 0vw;
+		margin-bottom: 0.5vw;
+	    font-size: 1.5vw;
+	}
+
+	span, p, b, body, tr, td, table, div {
+	    font-size: 0.75vw;
+	}
+
+	.card {
+	    padding: 0.5vw 0.5vw 0.5vw 0.5vw;
+	    margin: 0 0.5vw 0.5vw 0;
+	    width: 6vw;
+	    min-height: 7.5vw;
+	    display: flex;
+	}
+
+    #field {
+        margin-bottom: 2vw
+    }
+}";
 
         public static string ConstructGamePage(Game game, User user)
         {
@@ -107,7 +145,7 @@ span, p {{
                         }}
                     }}
                 }}
-                var state = document.getElementById(""scoreboard"").dataset.state;
+                var state = document.getElementById(""field"").dataset.state;
                 request.open(""GET"", ""/refreshgame/{game.Id}?state="" + state, true);
                 request.send(null);
             }}
@@ -116,20 +154,23 @@ span, p {{
                 intervalId = setInterval(function() {{
                     refresh(); 
                 }}, 1000);
+                refresh();
             }})();
         </script>
     </head>
     <body>
         <h1>Cards Against Humanity Online - {game.Name}</h1>
         <table width='100%'>
-            <tr id='content'>
-                {GamePageConstructor.ConstructRefreshPage(game, user)}
-            </tr>
             <tr>
-                <td>
+                <td colspan=""2"" id=""content"">
+                    <span id=""field"" data-state=""{-1}"">Waiting for the server...</span>
+                </td>
+            </tr>
+            <tr class=""footer"">
+                <td width=""25%"">
                     Copyright 2016 © Stefan Baumann (<a href='https://github.com/stefan-baumann'>GitHub</a>)
                 </td>
-                <td>
+                <td width=""75%"">
                     This web game is based off the card game <a href='https://www.cardsagainsthumanity.com/'>Cards Against Humanity</a> which is available for free under the <a href='https://www.cardsagainsthumanity.com/'>Creative Commons BY-NC-SA 2.0 license</a>.
                 </td>
             </tr>
@@ -138,39 +179,30 @@ span, p {{
 </html>";
         }
 
+
+
         public static string ConstructRefreshPage(Game game, User user)
         {
-            return $@"<td id=""scoreboard"" data-state=""{game.UpdateCounter}"">
-    {GamePageConstructor.ConstructPlayerList(game, user)}
-</td>
-<td>
-    {GamePageConstructor.ConstructField(game, user)}
-    {GamePageConstructor.ConstructWhiteCardCollection(game, user)}
-</td>";
+            return $@"
+<table width=""100%"" id=""field"" data-state=""{game.UpdateCounter}"">
+    <tr>
+        <td colspan=""2"">
+            {GamePageConstructor.ConstructField(game, user)}
+            {GamePageConstructor.ConstructWhiteCardCollection(game, user)}
+        </td>
+    </tr>
+    <tr>
+        <td width=""25%"">
+            {GamePageConstructor.ConstructPlayerList(game, user)}
+        </td>
+        <td width=""75%"">
+            {GamePageConstructor.ConstructHistoryList(game, user)}
+        </td>
+    </tr>
+</table>";
         }
 
-        private static string ConstructPlayerList(Game game, User user)
-        {
-            StringBuilder result = new StringBuilder();
 
-            result.AppendLine(@"<div class='playerlist' height='100%'><h3>Players</h3>");
-            foreach (Player player in game.Players.OrderByDescending(p => p.Points))
-            {
-                result.Append($@"<{(player.User == user ? "b" : "p")}>{player.User.Name}");
-                if (game.Judge == player)
-                {
-                    result.Append(@" (Judge)");
-                }
-                else if (game.PlayedWhiteCards.ContainsKey(player))
-                {
-                    result.Append(@" (Played)");
-                }
-                result.AppendLine($@" - {player.Points} points</{(player.User == user ? "b" : "p")}>");
-            }
-            result.AppendLine(@"</div>");
-
-            return result.ToString();
-        }
 
         private static string ConstructField(Game game, User user)
         {
@@ -187,7 +219,7 @@ span, p {{
                         {
                             if (playedCard.Key == player)
                             {
-                                result.AppendLine($@"<div class='card white-card'>{playedCard.Value.Text}<span></span></div>");
+                                result.AppendLine($@"<div class='card white-card'><span>{playedCard.Value.Text}</span></div>");
                             }
                             else
                             {
@@ -266,6 +298,43 @@ span, p {{
                     return @"<p>You're the judge - wait for the other players to select their cards.<p><br>";
                 }
             }
+        }
+
+        private static string ConstructPlayerList(Game game, User user)
+        {
+            StringBuilder result = new StringBuilder();
+
+            result.AppendLine(@"<div class='playerlist' height='100%'><h3>Players</h3>");
+            foreach (Player player in game.Players.OrderByDescending(p => p.Points))
+            {
+                result.Append($@"<{(player.User == user ? "b" : "p")}>{player.User.Name}");
+                if (game.Judge == player)
+                {
+                    result.Append(@" (Judge)");
+                }
+                else if (game.PlayedWhiteCards.ContainsKey(player))
+                {
+                    result.Append(@" (Played)");
+                }
+                result.AppendLine($@" - {player.Points} points</{(player.User == user ? "b" : "p")}>");
+            }
+            result.AppendLine(@"</div>");
+
+            return result.ToString();
+        }
+
+        private static string ConstructHistoryList(Game game, User user)
+        {
+            StringBuilder result = new StringBuilder();
+
+            result.AppendLine(@"<div class='history' height='100%'><h3>Last Rounds</h3>");
+            foreach (RoundResult round in game.LastRounds.Take(3))
+            {
+                result.Append($@"<p><b>{round.BlackCard.Text}</b> - {round.WinningCard.Text} ({round.Winner.User.Name})</p>");
+            }
+            result.AppendLine(@"</div>");
+
+            return result.ToString();
         }
     }
 }
