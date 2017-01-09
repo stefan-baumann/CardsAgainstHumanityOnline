@@ -98,18 +98,24 @@ span, p {{
                     if (request.readyState == 4 && request.status == 200) {{
                         if (request.responseText == """") {{
                             clearInterval(intervalId);
+                            console.log(""Stopped the update cycle."");
+                        }} else if (request.responseText != ""ok"") {{
+                            document.getElementById(""content"").innerHTML = request.responseText;
+                            console.log(""Updated the content."");
+                        }} else {{
+                            console.log(""No update necessary."");
                         }}
-                        document.getElementById(""content"").innerHTML = request.responseText;
                     }}
                 }}
-                request.open(""GET"", ""/refreshgame/{game.Id}"", true);
+                var state = document.getElementById(""scoreboard"").dataset.state;
+                request.open(""GET"", ""/refreshgame/{game.Id}?state="" + state, true);
                 request.send(null);
             }}
 
             (function () {{
                 intervalId = setInterval(function() {{
                     refresh(); 
-                }}, 2000);
+                }}, 1000);
             }})();
         </script>
     </head>
@@ -134,7 +140,7 @@ span, p {{
 
         public static string ConstructRefreshPage(Game game, User user)
         {
-            return $@"<td>
+            return $@"<td id=""scoreboard"" data-state=""{game.UpdateCounter}"">
     {GamePageConstructor.ConstructPlayerList(game, user)}
 </td>
 <td>

@@ -176,15 +176,11 @@ namespace CardsAgainstHumanity.Server
                                 context.Response.Redirect(Regex.Replace(context.Request.Url.ToString(), "/join.*", "/join"));
                                 return true;
 
-                            case "refreshgame" when length == 2 && parameters.Count == 0: //Interface for getting the updated content of the game page (authenticated, user must be a player), syntax: server/refreshgame/<GID>
-                                if (int.TryParse(path[1], out gameId) && this.Game.Games.ContainsKey(gameId))
+                            case "refreshgame" when length == 2 && parameters.Count == 1 && parameters.ContainsKey("state"): //Interface for getting the updated content of the game page (authenticated, user must be a player), syntax: server/refreshgame/<GID>
+                                if (int.TryParse(path[1], out gameId) && this.Game.Games.ContainsKey(gameId) && int.TryParse(parameters["state"], out int state))
                                 {
-                                    if (this.VerifyInternal(context, out userId) && this.Game.Games[gameId].Players.Any(p => p.User.Id == userId))
-                                    {
-                                        this.Game.Games[gameId].RefreshState();
-                                        context.WriteString(GamePageConstructor.ConstructRefreshPage(this.Game.Games[gameId], this.Game.GetUser(userId)));
-                                        return true;
-                                    }
+                                    this.ProcessRefreshGameRequest(context, gameId, state);
+                                    return true;
                                 }
                                 context.WriteString(string.Empty);
                                 return true;
@@ -468,6 +464,27 @@ function verify(reload) {
     </body>
 </html>";
             context.WriteString(response);
+        }
+
+
+
+        protected internal Dictionary<Game, Dictionary<Player, int>> UpdateStates { get; } = new Dictionary<Game, Dictionary<Player, int>>();
+        protected internal void ProcessRefreshGameRequest(HttpListenerContext context, int gameId, int currentState)
+        {
+            if (this.VerifyInternal(context, out int userId) && this.Game.Games[gameId].Players.Any(p => p.User.Id == userId))
+            {
+                Game game = this.Game.Games[gameId];
+                game.RefreshState();
+                if (currentState < game.UpdateCounter)
+                {
+                    context.WriteString(GamePageConstructor.ConstructRefreshPage(this.Game.Games[gameId], this.Game.GetUser(userId)));
+                }
+                else
+                {
+                    //No need to send everything again - send 'ok' to indicate that fact to the client
+                    context.WriteString("ok");
+                }
+            }
         }
 
 

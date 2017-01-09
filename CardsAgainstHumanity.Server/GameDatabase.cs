@@ -81,6 +81,7 @@ namespace CardsAgainstHumanity.Server
             };
 
             this.Games.Add(id, game);
+            game.UpdateCounter++;
             return game;
         }
 
@@ -116,12 +117,14 @@ namespace CardsAgainstHumanity.Server
                     }
                     else
                     {
-                        this.Games[gameId].Players.Add(new Player()
+                        Game game = this.Games[gameId];
+                        game.Players.Add(new Player()
                         {
                             User = this.GetUser(userId),
                             Points = 0,
                             WhiteCards = new List<WhiteCard>()
                         });
+                        game.UpdateCounter++;
 
                         return true;
                     }

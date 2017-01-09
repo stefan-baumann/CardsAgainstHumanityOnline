@@ -31,6 +31,9 @@ namespace CardsAgainstHumanity.Core
 
         public CardDatabase Cards { get; set; }
 
+        //Internal variable which is incremented every time anything in the game has been updated - used for checking whether a client needs to be updated
+        public int UpdateCounter { get; set; } = 0;
+
         private object stateLockObject = new object();
         public void RefreshState()
         {
@@ -44,6 +47,7 @@ namespace CardsAgainstHumanity.Core
                     {
                         this.Cards.Recycle(this.CurrentBlackCard);
                         this.CurrentBlackCard = null;
+                        this.UpdateCounter++;
                     }
                 }
 
@@ -53,13 +57,17 @@ namespace CardsAgainstHumanity.Core
                     if (!this.Players.Contains(playedCard.Key))
                     {
                         this.PlayedWhiteCards.Remove(playedCard.Key);
+                        this.UpdateCounter++;
                     }
                 }
 
                 foreach (Player player in this.Players)
                 {
                     //Fill up the cards of each player
-                    for (; player.WhiteCards.Count < 10; player.WhiteCards.Add(this.Cards.DrawWhiteCard())) ;
+                    for (; player.WhiteCards.Count < 10; player.WhiteCards.Add(this.Cards.DrawWhiteCard()))
+                    {
+                        this.UpdateCounter++;
+                    }
                 }
 
                 switch (this.State)
@@ -76,6 +84,8 @@ namespace CardsAgainstHumanity.Core
                             }
 
                             this.State = GameState.PlayingCards;
+
+                            this.UpdateCounter++;
                             this.RefreshState();
                         }
                         return;
@@ -88,6 +98,8 @@ namespace CardsAgainstHumanity.Core
                             this.RoundWinner = null;
 
                             this.State = GameState.Judging;
+
+                            this.UpdateCounter++;
                             this.RefreshState();
                         }
                         return;
@@ -117,6 +129,7 @@ namespace CardsAgainstHumanity.Core
                             this.PlayedWhiteCards.Clear();
 
                             this.State = GameState.PlayingCards;
+                            this.UpdateCounter++;
                             this.RefreshState();
                         }
 
@@ -152,6 +165,7 @@ namespace CardsAgainstHumanity.Core
                     {
                         Console.WriteLine($"[{this.Name} / #{this.Id}] {player.User.Name} tried playing a card with an invalid index ({index}).");
                     }
+                    this.UpdateCounter++;
                     return;
                 
                 case "judge" when parameters.Count == 1 && parameters.ContainsKey("index"):
@@ -178,6 +192,7 @@ namespace CardsAgainstHumanity.Core
                     {
                         Console.WriteLine($"[{this.Name} / #{this.Id}] {player.User.Name} tried judging a card with an invalid index ({index}).");
                     }
+                    this.UpdateCounter++;
                     return;
             }
         }
@@ -186,7 +201,7 @@ namespace CardsAgainstHumanity.Core
 
         protected override bool IsEqualTo(Game other)
         {
-            return this.Id == other.Id && this.Name == other.Name && this.Password == other.Password && this.Judge == other.Judge && this.State == other.State && this.Players.SequenceEqual(other.Players);
+            return this.Id == other.Id && this.Name == other.Name && this.Password == other.Password;
         }
     }
 
