@@ -109,7 +109,7 @@ span, p {{
             (function () {{
                 intervalId = setInterval(function() {{
                     refresh(); 
-                }}, 500);
+                }}, 2000);
             }})();
         </script>
     </head>
