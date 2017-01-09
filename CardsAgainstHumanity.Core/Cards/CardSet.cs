@@ -25,7 +25,10 @@ namespace CardsAgainstHumanity.Core.Cards
         {
             foreach (KeyValuePair<string, int> card in this.BlackCards)
             {
-                yield return new BlackCard(card.Key, card.Value);
+                if (card.Value == 1)
+                {
+                    yield return new BlackCard(card.Key, card.Value);
+                }
             }
 
             yield break;

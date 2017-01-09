@@ -55,7 +55,13 @@ namespace CardsAgainstHumanity.Core
                         this.PlayedWhiteCards.Remove(playedCard.Key);
                     }
                 }
-                
+
+                foreach (Player player in this.Players)
+                {
+                    //Fill up the cards of each player
+                    for (; player.WhiteCards.Count < 10; player.WhiteCards.Add(this.Cards.DrawWhiteCard())) ;
+                }
+
                 switch (this.State)
                 {
                     case GameState.Inactive:
@@ -67,11 +73,6 @@ namespace CardsAgainstHumanity.Core
                             {
                                 //Select new black card
                                 this.CurrentBlackCard = this.Cards.DrawBlackCard();
-                            }
-                            foreach (Player player in this.Players)
-                            {
-                                //Fill up the cards of each player
-                                for (; player.WhiteCards.Count < 10; player.WhiteCards.Add(this.Cards.DrawWhiteCard())) ;
                             }
 
                             this.State = GameState.PlayingCards;
